@@ -10,104 +10,97 @@ Diego J.Muñoz. Freelance. Cocosistemas.com
 //Tenemos un array de Ordenantes (**cada uno con un IBAN de abono**), y para cada Ordenante
 //un array con sus ordenes de cobro
 
-{
-uso:
-- setInfoPresentador
-- Añadimos Ordenantes: addOrdenante (uno por cada cuenta de ingreso del cobro, donde nos pagan)
-- Añadimos los cobros: addCobro (uno por cada cobro, él solo se coloca en su Ordenante,
-  éste ha tenido que ser añadido previamente)
-- createfile (las ordenes estan en los arrays)
-- closefile
+{uso:
+   - setInfoPresentador
+   - Añadimos Ordenantes: addOrdenante (uno por cada cuenta de ingreso del cobro, donde nos pagan)
+   - Añadimos los cobros: addCobro (uno por cada cobro, él solo se coloca en su Ordenante,
+     éste ha tenido que ser añadido previamente)
+   - createfile (las ordenes estan en los arrays)
+   - closefile
 }
 
 interface
 
 type
-//info de una orden de cobro (norma 19.14 xml)
-TInfoCobro = class
-           sIdCobro: string; //id unico cobro, ejemplo:20130930Fra.509301
-           mImporte: Double;
-           sIdMandato:string;
-           dDateOfSignature:TDateTime; //del mandato
-           sBIC:string;
-           sNombreDeudor:string;
-           sIBAN:string;
-           sConcepto:string;
-end;
+  //info de una orden de cobro (norma 19.14 xml)
+  TInfoCobro = class
+    sIdCobro         :string; //id unico cobro, ejemplo:20130930Fra.509301
+    mImporte         :Double;
+    sIdMandato       :string;
+    dDateOfSignature :TDateTime; //del mandato
+    sBIC             :string;
+    sNombreDeudor    :string;
+    sIBAN            :string;
+    sConcepto        :string;
+  end;
 
-TListOfCobros = array[1..5000] of TInfoCobro;
+  TListOfCobros = array[1..5000] of TInfoCobro;
 
-//un conjunto de cobros por Ordenante, lo utilizamos por si utilizan
-//cobros a ingresar en diferentes cuentas (el <PmtInf> contiene la info del Ordenante, con su cuenta; y los
-//cobros relacionados con este Ordenante/cuenta de abono
-TInfoOrdenante = class
-                sPayMentId:string; //Ejemplo: 2013-10-28_095831Remesa 218 UNICO POR Ordenante
-                mSumaImportes:Double;
-                sNombreOrdenante:string;
-                sIBANOrdenante:string;
-                sBICOrdenante:string;
-                sIdOrdenante:string; //el ID único del ordenante, normalmente dado por el banco
-                listCobros : TListOfCobros;
-                iCobros : Integer;
-end;
+   //un conjunto de cobros por Ordenante, lo utilizamos por si utilizan
+   //cobros a ingresar en diferentes cuentas (el <PmtInf> contiene la info del Ordenante, con su cuenta; y los
+   //cobros relacionados con este Ordenante/cuenta de abono
+   TInfoOrdenante = class
+     sPayMentId       :string; //Ejemplo: 2013-10-28_095831Remesa 218 UNICO POR Ordenante
+     mSumaImportes    :Double;
+     sNombreOrdenante :string;
+     sIBANOrdenante   :string;
+     sBICOrdenante    :string;
+     sIdOrdenante     :string; //el ID único del ordenante, normalmente dado por el banco
+     listCobros       :TListOfCobros;
+     iCobros          :Integer;
+   end;
 
-TListOrdenantes = array[1..10] of TInfoOrdenante;
+   TListOrdenantes = array[1..10] of TInfoOrdenante;
 
-TDJMNorma1914XML = class //el Ordenante cobra al DEUDOR
+  TDJMNorma1914XML = class //el Ordenante cobra al DEUDOR
   private
-   FsFileName : string;
-   FsTxt : text;
-   FiOrdenantes : integer;
-   FListOrdenantes : TListOrdenantes; //Ordenantes, uno por cada cuenta de abono
+    FsFileName : string;
+    FsTxt : text;
+    FiOrdenantes : integer;
+    FListOrdenantes : TListOrdenantes; //Ordenantes, uno por cada cuenta de abono
 
-   FdFileDate : TDateTime;   //fecha del fichero
-   FmTotalImportes : double;  //suma de los importes de los cobros
-   FsNombrePresentador : string; //nombre del presentador (el 'initiator')
-   FsIdPresentador : string; //id presentador norma AT02
-   FdOrdenesCobro  : TDateTime; //fecha del cargo en cuenta, PARA TODAS LAS ORDENES
+    FdFileDate          :TDateTime;   //fecha del fichero
+    FmTotalImportes     :Double;  //suma de los importes de los cobros
+    FsNombrePresentador :string; //nombre del presentador (el 'initiator')
+    FsIdPresentador     :string; //id presentador norma AT02
+    FdOrdenesCobro      :TDateTime; //fecha del cargo en cuenta, PARA TODAS LAS ORDENES
 
-   procedure WriteGroupHeader;
-   procedure writeOrdenesCobro(oOrdenante:TInfoOrdenante);
-   procedure writeDirectDebitOperationInfo(oCobro:TInfoCobro);
+    procedure WriteGroupHeader;
+    procedure writeOrdenesCobro(oOrdenante:TInfoOrdenante);
+    procedure writeDirectDebitOperationInfo(oCobro:TInfoCobro);
 
-   procedure writeInfoMandato(sIdMandato:string;dDateOfSignature:TDateTime);
-   procedure writeIdentificacionOrdenante(sIdOrdenanteAux:string);
+    procedure writeInfoMandato(sIdMandato:string;dDateOfSignature:TDateTime);
+    procedure writeIdentificacionOrdenante(sIdOrdenanteAux:string);
 
-   function CalculateNumOperaciones:Integer;
+    function CalculateNumOperaciones:Integer;
+  public
+    property iOrdenantes:integer read FiOrdenantes;
+    property ListOrdenantes:TListOrdenantes read FListOrdenantes;
+    constructor Create;
+    destructor Destroy; reintroduce;
+    procedure SetInfoPresentador(dFileDate          :TDateTime;
+                                 sNombrePresentador :string;
+                                 sIdPresentador     :string;
+                                 dOrdenesCobro      :TDateTime);
+    procedure AddOrdenante(sPayMentId       :string;
+                           sNombreOrdenante :string;
+                           sIBANOrdenante   :string;
+                           sBICOrdenante    :string;
+                           sIdOrdenante     :string);
 
-   public
-   property iOrdenantes:integer read FiOrdenantes;
-   property listOrdenantes:TListOrdenantes read FListOrdenantes;
-   constructor create;
-   destructor destroy; reintroduce;
-   procedure SetInfoPresentador(dFileDate:TDateTime;sNombrePresentador:string;
-                         sIdPresentador:string;
-                         dOrdenesCobro:TDateTime);
-
-   procedure AddOrdenante(
-                         sPayMentId:string;
-                         sNombreOrdenante:string;
-                         sIBANOrdenante:string;
-                         sBICOrdenante:string;
-                         sIdOrdenante:string
-                        );
-
-   procedure AddCobro(
-                     sIdCobro: string; //id unico cobro, ejemplo:20130930Fra.509301
-                     mImporte: Double;
-                     sIdMandato:string;
-                     dDateOfSignature:TDateTime; //del mandato
-                     sBIC:string;
-                     sNombreDeudor:string;
-                     sIBAN:string;
-                     sConcepto:string;
-                     sIBANOrdenante:string //el cobro lo colocamos en la info de su Ordenante, por la cuenta
-                     );
-   procedure CreateFile(sFileName:string);
-   procedure closeFile;
-   function HayCobros:Boolean;
-
-end;
+    procedure AddCobro(sIdCobro         :string; //id unico cobro, ejemplo:20130930Fra.509301
+                       mImporte         :Double;
+                       sIdMandato       :string;
+                       dDateOfSignature :TDateTime; //del mandato
+                       sBIC             :string;
+                       sNombreDeudor    :string;
+                       sIBAN            :string;
+                       sConcepto        :string;
+                       sIBANOrdenante   :string); //el cobro lo colocamos en la info de su Ordenante, por la cuenta
+    procedure CreateFile(sFileName :string);
+    procedure CloseFile;
+    function HayCobros:Boolean;
+  end;
 
 implementation
 uses uDJMSepa, SysUtils, windows, dialogs;

@@ -1,9 +1,9 @@
 object frMain: TfrMain
   Left = 320
   Top = 125
-  Width = 312
-  Height = 202
   Caption = 'Test normas SEPA xml'
+  ClientHeight = 163
+  ClientWidth = 296
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
