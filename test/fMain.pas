@@ -29,18 +29,18 @@ var Norma1914 :TNorma1914XML;
 begin
    {Un Ordenante. Un presentador puede presentar las órdenes de varios ordenantes}
    Initiator := TsepaInitiator.Create;
-   Initiator.IdInitiator := 'ID UNICO DE LAS ORDENES DE ESTE ORDENANTE';
+   Initiator.PaymentId   := 'ID UNICO DE LAS ORDENES DE ESTE ORDENANTE';
    Initiator.Name        := 'EMPRESA ORDENANTE 1 S.L.'                 ;
    Initiator.IBAN        := 'el iban de este ordenante'                ;
    Initiator.BIC         := 'BicOrdenante1'                            ;
-   {----------------------------------------------------------------------------------}
    Initiator.IdInitiator := 'ID.ORDENANTE'; {el ID único del ordenante, normalmente dado por el banco}
+   {----------------------------------------------------------------------------------}
 
    //las ordenes de cobro de este ordenante
    Operation := TsepaOperation.Create;
    Operation.OpId            := 'idCobro unico'; {utilizar un nº de documento o contador, etc}
    Operation.Import          := 1200;
-   Operation.IdMandator      := 'id.mandato'; {por ejemplo, poner un nº de contrato o del documento de la firma del mandato}
+   Operation.IdMandator      := 'id.mandato'; {por ejemplo, poner un nº de contrato o del documento de la firma del mandator}
    Operation.DateOfSignature := StrToDate('31/10/2009'); {esta es la fecha por defecto de los que no tienen fecha de mandato}
    Operation.BIC             := 'Bic de este Deudor';
    Operation.Name            := 'Nombre Deudor 1 S.L.';
@@ -88,7 +88,8 @@ var Norma3414 :TNorma3414XML;
     Operation :TsepaOperation;
 begin
    Initiator := TsepaInitiator.Create;
-   Initiator.IdInitiator := 'ID. UNICO DEL PAGO'       ;
+   //Initiator.IdInitiator
+   Initiator.PaymentId   := 'ID. UNICO DEL PAGO'       ;
    Initiator.Name        := 'NOMBRE DEL ORDENANTE S.L.';
    Initiator.IBAN        := 'IBAN DEL ORDENANTE'       ;
    Initiator.BIC         := 'BIC DEL ORDENANTE'        ;
