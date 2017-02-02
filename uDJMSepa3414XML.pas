@@ -23,6 +23,8 @@ ser añadido previamente)
 
 interface
 
+uses senCille.CustomSEPA;
+
 type
   //info de una orden de pago (norma 34.14 xml)
   TInfoPago = class
@@ -51,7 +53,7 @@ type
 
   TListOrdenantes = array[1..10] of TInfoOrdenante;
 
-  TDJMNorma3414XML = class //el Ordenante paga al Beneficiario
+  TDJMNorma3414XML = class(TCustomSEPA) //el Ordenante paga al Beneficiario
     FsFileName      :string;
     FsTxt           :Text;
     FiOrdenantes    :Integer;
@@ -98,16 +100,8 @@ type
   end;
 
 implementation
-uses SysUtils, Windows, Dialogs,
-     uDJMSepa;
+uses SysUtils, Windows, Dialogs;
 
-const
-   C_SCHEMA_34                 = 'pain.001.001.03';
-   C_INITIATOR_NAME_MAX_LENGTH = 70;
-   C_BENEFICIARIO_NAME_MAX_LEN = 70;
-   C_Ordenante_NAME_MAXLEN     = 70;
-   C_RMTINF_MAXLEN             = 140;
-   C_MNDTID_MAXLEN             = 35;
 
 constructor TDJMNorma3414XML.Create;
 begin
@@ -140,22 +134,22 @@ begin
 
    //1.1 MessageId Referencia asignada por la parte iniciadora y enviada a la siguiente
    //parte de la cadena para identificar el mensaje de forma inequívoca
-   Writeln(FsTxt, '<MsgId>'+uSEPA_CleanStr(uSEPA_GenerateUUID)+'</MsgId>');
+   Writeln(FsTxt, '<MsgId>'+CleanStr(GenerateUUID)+'</MsgId>');
 
    //1.2 Fecha y hora cuando la parte iniciadora ha creado un (grupo de) instrucciones de pago
    //(con 'now' es suficiente)
-   Writeln(FsTxt, '<CreDtTm>'+uSEPA_FormatDateTimeXML(FdFileDate)+'</CreDtTm>');
+   Writeln(FsTxt, '<CreDtTm>'+FormatDateTimeXML(FdFileDate)+'</CreDtTm>');
 
    //1.6  Número de operaciones individuales que contiene el mensaje
    Writeln(FsTxt, '<NbOfTxs>'+IntToStr(CalculateNumOperaciones)+'</NbOfTxs>');
 
    //1.7 Suma total de todos los importes individuales incluidos en el mensaje
-   writeLn(FsTxt, '<CtrlSum>'+uSEPA_FormatAmountXML(FmTotalImportes)+'</CtrlSum>');
+   writeLn(FsTxt, '<CtrlSum>'+FormatAmountXML(FmTotalImportes)+'</CtrlSum>');
 
    //1.8 Parte que presenta el mensaje. En el mensaje de presentación, puede ser el “Ordenante” o “el presentador”
    Write(FsTxt, '<InitgPty>');
        //Nombre de la parte
-       WriteLn(FsTxt, '<Nm>'+uSEPA_CleanStr(FsNombrePresentador, C_INITIATOR_NAME_MAX_LENGTH)+'</Nm>');
+       WriteLn(FsTxt, '<Nm>'+CleanStr(FsNombrePresentador, INITIATOR_NAME_MAX_LENGTH)+'</Nm>');
 
        //Para el sistema de adeudos SEPA se utilizará exclusivamente la etiqueta “Otra” estructurada
        //según lo definido en el epígrafe “Identificador del presentador” de la sección 3.3
@@ -180,7 +174,7 @@ begin
    Rewrite(FsTxt);
    WriteLn(FsTxt, '<?xml version="1.0" encoding="UTF-8"?>');
 
-   WriteLn(FsTxt,'<Document xmlns="urn:iso:std:iso:20022:tech:xsd:'+C_Schema_34+'"'+
+   WriteLn(FsTxt,'<Document xmlns="urn:iso:std:iso:20022:tech:xsd:'+SCHEMA_34+'"'+
                      ' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">');
 
    //MESSAGE ROOT. Identifica el tipo de mensaje
@@ -208,7 +202,7 @@ begin
    WriteLn(FsTxt, '<PmtInf>');
    //2.1 Identificación de Información del pago - PaymentInformationIdentification
    //Referencia asignada por el ordenante para identificar claramente el bloque de información de pago dentro del mensaje
-   WriteLn(FsTxt, '<PmtInfId>'+uSEPA_CleanStr(oOrdenante.sPaymentId)+'</PmtInfId>');
+   WriteLn(FsTxt, '<PmtInfId>'+CleanStr(oOrdenante.sPaymentId)+'</PmtInfId>');
    //2.2 Método de pago - PaymentMethod
    WriteLn(FsTxt, '<PmtMtd>'+'TRF'+'</PmtMtd>');
    //2.4 Número de operaciones - NumberOfTransactions
@@ -216,25 +210,25 @@ begin
    //2.5 Con trol de suma - ControlSum
    //Suma total de todos los importes individuales incluidos en el bloque de información
    //de pago, sin tener en cuenta las divisas. Sirve como elemento de control.
-   WriteLn(FsTxt, '<CtrlSum>'+uSEPA_FormatAmountXML(oOrdenante.mSumaImportes)+'</CtrlSum>');
+   WriteLn(FsTxt, '<CtrlSum>'+FormatAmountXML(oOrdenante.mSumaImportes)+'</CtrlSum>');
    //2.6 Información del tipo de pago - PaymentTypeInformation
    WriteLn(FsTxt, '<PmtTpInf>');
    //2.8 Nivel de servicio - ServiceLevel
    WriteLn(FsTxt, '<SvcLvl><Cd>'+'SEPA'+'</Cd></SvcLvl>');
    WriteLn(FsTxt, '</PmtTpInf>');
    //2.17 Fecha de ejecución solicitada - Requested ExecutionDate
-   WriteLn(FsTxt, '<ReqdExctnDt>'+uSEPA_FormatDateXML(FdOrdenesPago)+'</ReqdExctnDt>');
+   WriteLn(FsTxt, '<ReqdExctnDt>'+FormatDateXML(FdOrdenesPago)+'</ReqdExctnDt>');
    //2.19 Ordenante - Debtor
-   WriteLn(FsTxt, '<Dbtr><Nm>'+uSEPA_CleanStr(oOrdenante.sNombreOrdenante)+'</Nm></Dbtr>');
+   WriteLn(FsTxt, '<Dbtr><Nm>'+CleanStr(oOrdenante.sNombreOrdenante)+'</Nm></Dbtr>');
 
    //2.20 Cuenta del ordenante - DebtorAccount
    WriteLn(FsTxt, '<DbtrAcct>');
-   uSEPA_writeAccountIdentification(FsTxt, oOrdenante.sIBANOrdenante);
+   WriteAccountIdentification(FsTxt, oOrdenante.sIBANOrdenante);
    WriteLn(FsTxt, '</DbtrAcct>');
 
    //2.21 Entidad del ordenante - DebtorAgent
    WriteLn(FsTxt, '<DbtrAgt>');
-   uSEPA_writeBICInfo(FsTxt, oOrdenante.sBICOrdenante);
+   WriteBICInfo(FsTxt, oOrdenante.sBICOrdenante);
    WriteLn(FsTxt, '</DbtrAgt>');
 
    //2.24 Cláusula de gastos - ChargeBearer
@@ -257,30 +251,30 @@ begin
    //2.30 Identificación de extremo a extremo - EndTo EndIdentification
    //Referencia única que asigna la parte i niciadora para identi ficar la operación
    //y que se transmite sin cambios a lo largo de la cadena del pago hasta el beneficiario.
-   Write(FsTxt, '<EndToEndId>'+uSEPA_CleanStr(oPago.sIdPago)+'</EndToEndId>');
+   Write(FsTxt, '<EndToEndId>'+CleanStr(oPago.sIdPago)+'</EndToEndId>');
    WriteLn(FsTxt, '</PmtId>');
 
    //2.31 Información del tipo de pago – PaymentTypeInformation
    //<PmtTpInf>
 
    //2.42 Importe - Amoun t
-   WriteLn(FsTxt, '<Amt><InstdAmt Ccy="'+'EUR'+'">'+uSEPA_FormatAmountXML(oPAgo.mImporte)+'</InstdAmt></Amt>');
+   WriteLn(FsTxt, '<Amt><InstdAmt Ccy="'+'EUR'+'">'+FormatAmountXML(oPAgo.mImporte)+'</InstdAmt></Amt>');
 
    //2.77 Entidad del beneficiario - CreditorAgent
    WriteLn(FsTxt, '<CdtrAgt>');
-   uSEPA_WriteBICInfo(FsTxt, oPago.sBICBeneficiario);
+   WriteBICInfo(FsTxt, oPago.sBICBeneficiario);
    WriteLn(FsTxt, '</CdtrAgt>');
 
    //2.79 Beneficiario - Creditor
-   WriteLn(FsTxt, '<Cdtr><Nm>'+uSEPA_CleanStr(oPago.sNombreBeneficiario, C_BENEFICIARIO_NAME_MAX_LEN)+'</Nm></Cdtr>');
+   WriteLn(FsTxt, '<Cdtr><Nm>'+CleanStr(oPago.sNombreBeneficiario, BENEFICIARIO_NAME_MAX_LENGTH)+'</Nm></Cdtr>');
 
    //2.80 Cuenta del beneficiario - CreditorAccount
    WriteLn(FsTxt, '<CdtrAcct>');
-   uSEPA_WriteAccountIdentification(FsTxt, oPago.sIBANBeneficiario);
+   WriteAccountIdentification(FsTxt, oPago.sIBANBeneficiario);
    WriteLn(FsTxt, '</CdtrAcct>');
 
    //2.98 Concepto - RemittanceInformation
-   WriteLn(FsTxt, '<RmtInf><Ustrd>'+uSEPA_CleanStr(oPago.sConcepto, C_RMTINF_MAXLEN)+'</Ustrd></RmtInf>');
+   WriteLn(FsTxt, '<RmtInf><Ustrd>'+CleanStr(oPago.sConcepto, RMTINF_MAX_LENGTH)+'</Ustrd></RmtInf>');
 
    WriteLn(FsTxt, '</CdtTrfTxInf>');
 end;

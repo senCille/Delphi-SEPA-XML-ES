@@ -22,21 +22,21 @@ uses uDJMSepa1914XML,
 {$R *.dfm}
 
 procedure TfrMain.btnTestNorma19Click(Sender: TObject);
-var oNorma1914 :TDJMNorma1914XML;
+var Norma1914 :TDJMNorma1914XML;
 begin
-   oNorma1914 := TDJMNorma1914XML.Create;
+   Norma1914 := TDJMNorma1914XML.Create;
    try
       {Información general del fichero}
       {El id. del identificador te lo dará el Banco, LEER LAS NORMAS SEPA!!}
-      oNorma1914.SetInfoPresentador(Date, 'NOMBRE DEL PRESENTADOR S.L.', 'ID.PRESENTADOR', Date);
+      Norma1914.SetInfoPresentador(Date, 'NOMBRE DEL PRESENTADOR S.L.', 'ID.PRESENTADOR', Date);
       {Un Ordenante. Un presentador puede presentar las órdenes de varios ordenantes}
-      oNorma1914.AddOrdenante('ID UNICO DE LAS ORDENES DE ESTE ORDENANTE',
+      Norma1914.AddOrdenante('ID UNICO DE LAS ORDENES DE ESTE ORDENANTE',
                               'EMPRESA ORDENANTE 1 S.L.'                 ,
                               'el iban de este ordenante'                ,
                               'BicOrdenante1'                            ,
                               'ID.ORDENANTE'                             );
       //las ordenes de cobro de este ordenante
-      oNorma1914.AddCobro('idCobro unico', {utilizar un nº de documento o contador, etc}
+      Norma1914.AddCobro('idCobro unico', {utilizar un nº de documento o contador, etc}
                           1200,
                           'id.mandato', {por ejemplo, poner un nº de contrato o del documento de la firma del mandato}
                           StrToDate('31/10/2009')        , {esta es la fecha por defecto de los que no tienen fecha de mandato}
@@ -47,7 +47,7 @@ begin
                           'el iban de este ordenante'    ); {importante, el cobro se coloca en su ordenante/cuenta de cobro}
 
       {Segunda Orden de Cobro}
-      oNorma1914.AddCobro('idCobro unico-2'              , {utilizar un nº de documento o contador, etc}
+      Norma1914.AddCobro('idCobro unico-2'              , {utilizar un nº de documento o contador, etc}
                           230                            ,
                           'id.mandato'                   ,
                           StrToDate('31/10/2009')        , //esta es la fecha por defecto de los que no tienen fecha de mandato
@@ -57,14 +57,14 @@ begin
                           'Cobro de pruebas factura nº 1',
                           'el iban de este ordenante'    );//importante, el cobro se coloca en su ordenante/cuenta de cobro
 
-      if oNorma1914.HayCobros then begin {en algún algoritmo te puede ser util comprobar que has añadido cobros}
-         oNorma1914.CreateFile('test-1914.xml');
-         oNorma1914.CloseFile;
+      if Norma1914.HayCobros then begin {en algún algoritmo te puede ser util comprobar que has añadido cobros}
+         Norma1914.CreateFile('test-1914.xml');
+         Norma1914.CloseFile;
          ShowMessage('Fichero 1914 creado');
       end
       else ShowMessage('No hay cobros');
    finally
-      oNorma1914.Free;
+      Norma1914.Free;
    end;
 end;
 

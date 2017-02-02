@@ -5,7 +5,7 @@ uses
   fMain in 'fMain.pas' {frMain},
   uDJMSepa1914XML in '..\uDJMSepa1914XML.pas',
   uDJMSepa3414XML in '..\uDJMSepa3414XML.pas',
-  uDJMSepa in '..\uDJMSepa.pas';
+  senCille.CustomSEPA in '..\senCille.CustomSEPA.pas';
 
 {$R *.res}
 
