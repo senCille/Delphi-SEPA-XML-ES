@@ -22,80 +22,33 @@ Diego J.Muñoz. Freelance. Cocosistemas.com
 interface
 
 uses System.Generics.Collections,
+     senCille.SEPAAuxClasses,
      senCille.CustomSEPA;
 
 type
-  //info de una orden de cobro (norma 19.14 xml)
-  TsepaCollect = class {un Cobro}
-    IdCobro         :string; //id unico cobro, ejemplo:20130930Fra.509301
-    Importe         :Double;
-    IdMandato       :string;
-    DateOfSignature :TDateTime; //del mandato
-    BIC             :string;
-    NombreDeudor    :string;
-    IBAN            :string;
-    Concepto        :string;
-  end;
-
-  //TListOfCobros = array[1..5000] of TsepaCollection;
-
-  //un conjunto de cobros por Ordenante, lo utilizamos por si utilizan
-  //cobros a ingresar en diferentes cuentas (el <PmtInf> contiene la info del Ordenante, con su cuenta; y los
-  //cobros relacionados con este Ordenante/cuenta de abono
-  TsepaOrdenante = class {un Ordenante}
-    PayMentId       :string; //Ejemplo: 2013-10-28_095831Remesa 218 UNICO POR Ordenante
-    SumaImportes    :Double;
-    NombreOrdenante :string;
-    IBANOrdenante   :string;
-    BICOrdenante    :string;
-    IdOrdenante     :string; //el ID único del ordenante, normalmente dado por el banco
-    Collects        :TList<TsepaCollect>;
-    constructor Create;
-    destructor Destroy; override;
-  end;
-
-  //TListOrdenantes = array[1..10] of TsepaOrdenante;
-
   TDJMNorma1914XML = class(TCustomSEPA) //el Ordenante cobra al DEUDOR
   private
     FOuputFile  :Text;
-    FOrdenantes :TList<TsepaOrdenante>; //Ordenantes, uno por cada cuenta de abono
-    FmTotalImportes :Double;    //suma de los importes de los cobros
+    FOrdenantes :TList<TsepaInitiator>; //Ordenantes, uno por cada cuenta de abono
 
     procedure WriteGroupHeader;
-    procedure WriteOrdenesCobro(AOrdenante :TsepaOrdenante);
+    procedure WriteOrdenesCobro(AOrdenante :TsepaInitiator);
     procedure WriteDirectDebitOperationInfo(ACollection :TsepaCollect);
 
     procedure WriteInfoMandato(sIdMandato :string; dDateOfSignature :TDateTime);
-    procedure WriteIdentificacionOrdenante(sIdOrdenanteAux :string);
+    procedure WriteIdentificacionOrdenante(AIdOrdenanteAux :string);
 
-    function CalculateNumOperaciones:Integer;
+    function GetNumOperations:Integer;
+    function GetTotalImport  :Double;
   public
     constructor Create;
     destructor Destroy; reintroduce;
-    {$Message Warn 'Pasar una instancia en vez de los parámetros'}
-    procedure AddOrdenante(APayMentId       :string;
-                           ANombreOrdenante :string;
-                           AIBANOrdenante   :string;
-                           ABICOrdenante    :string;
-                           AIdOrdenante     :string);
-
-    {$Message Warn 'Pasar una instancia en vez de los parámetros'}
-    procedure AddCobro(AIdCobro         :string; //id unico cobro, ejemplo:20130930Fra.509301
-                       AImporte         :Double;
-                       AIdMandato       :string;
-                       ADateOfSignature :TDateTime; //del mandato
-                       ABIC             :string;
-                       ANombreDeudor    :string;
-                       AIBAN            :string;
-                       AConcepto        :string;
-                       AIBANOrdenante   :string); //el cobro lo colocamos en la info de su Ordenante, por la cuenta
-
+    procedure AddOrdenante(AOrdenante :TsepaInitiator);
     procedure CreateFile(AFileName :string);
     procedure CloseFile;
-    function HayCobros:Boolean;
+    function ThereAreOperations:Boolean;
 
-    property Ordenantes :TList<TsepaOrdenante> read FOrdenantes;
+    property Ordenantes :TList<TsepaInitiator> read FOrdenantes;
   end;
 
 implementation
@@ -104,8 +57,7 @@ uses System.SysUtils, Dialogs;
 constructor TDJMNorma1914XML.Create;
 begin
    inherited;
-   FOrdenantes         := TList<TsepaOrdenante>.Create; //Ordenantes, uno por cada cuenta de abono
-   FmTotalImportes     := 0;
+   FOrdenantes := TList<TsepaInitiator>.Create; //Ordenantes, uno por cada cuenta de abono
 end;
 
 destructor TDJMNorma1914XML.Destroy;
@@ -128,10 +80,10 @@ begin
    Writeln(FOuputFile, '<CreDtTm>'+FormatDateTimeXML(FileDate)+'</CreDtTm>');
 
    //1.6  Número de operaciones individuales que contiene el mensaje
-   Writeln(FOuputFile, '<NbOfTxs>'+IntToStr(CalculateNumOperaciones)+'</NbOfTxs>');
+   Writeln(FOuputFile, '<NbOfTxs>'+IntToStr(GetNumOperations)+'</NbOfTxs>');
 
    //1.7 Suma total de todos los importes individuales incluidos en el mensaje
-   writeLn(FOuputFile, '<CtrlSum>'+FormatAmountXML(FmTotalImportes)+'</CtrlSum>');
+   writeLn(FOuputFile, '<CtrlSum>'+FormatAmountXML(GetTotalImport)+'</CtrlSum>');
 
    //1.8 Parte que presenta el mensaje. En el mensaje de presentación, puede ser el “Ordenante” o “el presentador”
    Write(FOuputFile, '<InitgPty>');
@@ -154,7 +106,7 @@ end;
 
 
 procedure TDJMNorma1914XML.CreateFile(AFileName :string);
-var Ordenante :TsepaOrdenante;
+var Ordenante :TsepaInitiator;
 begin
    //FsFileName := AFileName;
    AssignFile(FOuputFile, AFileName);
@@ -182,7 +134,7 @@ begin
    Close(FOuputFile);
 end;
 
-procedure TDJMNorma1914XML.WriteOrdenesCobro(AOrdenante :TsepaOrdenante);
+procedure TDJMNorma1914XML.WriteOrdenesCobro(AOrdenante :TsepaInitiator);
 var Collect :TsepaCollect;
 begin
    //2.0 1..n Conjunto de características que se aplican a la parte del Ordenante de
@@ -290,7 +242,7 @@ begin
 
    //2.66 Identificación del Ordenante – CreditorSchemeIdentification
    //es como el 2.27. No lo ponemos porque ya ponemos el 2.27
-   //writeIdentificacionOrdenante(sIdOrdenanteAux);
+   //writeIdentificacionOrdenante(AIdOrdenanteAux);
 
    //2.70 Entidad del deudor – DebtorAgent
    WriteLn(FOuputFile,  '<DbtrAgt>');
@@ -337,7 +289,7 @@ begin
    WriteLn(FOuputFile, '</MndtRltdInf>');
 end;
 
-procedure TDJMNorma1914XML.AddCobro(AIdCobro         :string; //id unico cobro, ejemplo:20130930Fra.509301
+(*procedure TDJMNorma1914XML.AddCobro(AIdCobro         :string; //id unico cobro, ejemplo:20130930Fra.509301
                                     AImporte         :Double;
                                     AIdMandato       :string;
                                     ADateOfSignature :TDateTime; //del mandato
@@ -363,11 +315,6 @@ begin
       Exit;
    end;
 
-   if FOrdenantes[Found].Collects.Count = 5000 then begin
-      ShowMessage('No admitimos más de 5000 cobros por Ordenante');
-      Exit;
-   end;
-
    //hemos encontrado el Ordenante con ese IBAN, añadimos un cobro
    NewCollection := TsepaCollect.Create;
    NewCollection.IdCobro         := AIdCobro;
@@ -380,40 +327,16 @@ begin
    NewCollection.Concepto        := AConcepto;
 
    FOrdenantes[Found].Collects.Add(NewCollection);
-   FOrdenantes[Found].SumaImportes := FOrdenantes[Found].SumaImportes + AImporte;
-   FmTotalImportes                 := FmTotalImportes + AImporte;
-end;
+   FmTotalImportes := FmTotalImportes + AImporte;
+end;*)
 
-procedure TDJMNorma1914XML.AddOrdenante(APayMentId, ANombreOrdenante, AIBANOrdenante, ABICOrdenante, AIdOrdenante :string);
-var Found  :Boolean;
-    i      :Integer;
-    NewOrdenante :TsepaOrdenante;
+procedure TDJMNorma1914XML.AddOrdenante(AOrdenante :TsepaInitiator);
 begin
-   if FOrdenantes.Count >= 10 then begin
-      ShowMessage('Solamente se admiten como máximo 10 Ordenantes');
-      Exit;
-   end;
-
-   //si ya hay uno con esa cuenta, no lo añadimos
-   Found := False;
-   for i := 0 to FOrdenantes.Count-1 do begin
-      if FOrdenantes[i].IBANOrdenante = AIBANOrdenante then Found := True;
-   end;
-
-   if not Found then begin
-      NewOrdenante := TsepaOrdenante.Create;
-      NewOrdenante.SumaImportes    := 0;
-      NewOrdenante.PayMentId       := APayMentId;
-      NewOrdenante.NombreOrdenante := ANombreOrdenante;
-      NewOrdenante.IBANOrdenante   := AIBANOrdenante;
-      NewOrdenante.BICOrdenante    := ABICOrdenante;
-      NewOrdenante.IdOrdenante     := AIdOrdenante;
-      FOrdenantes.Add(NewOrdenante);
-   end;
+   FOrdenantes.Add(AOrdenante);
 end;
 
-function TDJMNorma1914XML.CalculateNumOperaciones:Integer;
-var i :TsepaOrdenante;
+function TDJMNorma1914XML.GetNumOperations:Integer;
+var i :TsepaInitiator;
 begin
    Result := 0;
    for i in FOrdenantes do begin
@@ -421,37 +344,32 @@ begin
    end;
 end;
 
-function TDJMNorma1914XML.HayCobros;
+function TDJMNorma1914XML.GetTotalImport:Double;
+var i :TsepaInitiator;
 begin
-   Result := FmTotalImportes <> 0;
+   Result := 0;
+   for i in FOrdenantes do begin
+      Result := Result + i.GetTotalImport;
+   end;
 end;
 
-procedure TDJMNorma1914XML.writeIdentificacionOrdenante;
+function TDJMNorma1914XML.ThereAreOperations;
+begin
+   Result := GetTotalImport <> 0;
+end;
+
+procedure TDJMNorma1914XML.WriteIdentificacionOrdenante(AIdOrdenanteAux :string);
 begin
    WriteLn(FOuputFile, '<CdtrSchmeId>');
    WriteLn(FOuputFile, '<Id>'         );
    WriteLn(FOuputFile, '<PrvtId>'     );
    WriteLn(FOuputFile, '<Othr>'       );
-   WriteLn(FOuputFile, '<Id>' + CleanStr(sIdOrdenanteAux) + '</Id>');
+   WriteLn(FOuputFile, '<Id>' + CleanStr(AIdOrdenanteAux) + '</Id>');
    WriteLn(FOuputFile, '<SchmeNm><Prtry>SEPA</Prtry></SchmeNm>');
    WriteLn(FOuputFile, '</Othr>'       );
    WriteLn(FOuputFile, '</PrvtId>'     );
    WriteLn(FOuputFile, '</Id>'         );
    writeLn(FOuputFile, '</CdtrSchmeId>');
-end;
-
-{ TsepaOrdenante }
-
-constructor TsepaOrdenante.Create;
-begin
-   inherited;
-   Collects := TList<TsepaCollect>.Create;
-end;
-
-destructor TsepaOrdenante.Destroy;
-begin
-   Collects.Free;
-   inherited;
 end;
 
 end.

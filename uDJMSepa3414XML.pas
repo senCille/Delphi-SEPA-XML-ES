@@ -24,37 +24,14 @@ ser añadido previamente)
 interface
 
 uses System.Generics.Collections,
+     senCille.SEPAAuxClasses,
      senCille.CustomSEPA;
 
 type
-  //info de una orden de pago (norma 34.14 xml)
-  TsepaPayment = class
-    IdPago             :string; //id unico pago, ejemplo:20130930Fra.509301
-    Importe            :Double;
-    BICBeneficiario    :string;
-    NombreBeneficiario :string;
-    IBANBeneficiario   :string;
-    Concepto           :string;
-  end;
-
-  //un conjunto de pagos por Ordenante, lo utilizamos por si utilizan
-  //pagos a cargar en diferentes cuentas (el <PmtInf> contiene la info del Ordenante, con su cuenta; y los
-  //pagos relacionados con este Ordenante/cuenta de cargo
-  TsepaOrdenante = class
-    PayMentId       :string; //Ejemplo: 2013-10-28_095831Remesa 218 UNICO POR Ordenante
-    SumaImportes    :Double;
-    NombreOrdenante :string;
-    IBANOrdenante   :string;
-    BICOrdenante    :string;
-    Payments        :TList<TsepaPayment>;
-    constructor Create;
-    destructor Destroy; reintroduce;
-  end;
-
   TDJMNorma3414XML = class(TCustomSEPA) //el Ordenante paga al Beneficiario
     FOuputFile  :Text;
     FOrdenantes :TList<TsepaOrdenante>; //Ordenantes, uno por cada cuenta de cargo
-    FmTotalImportes     :Double;    //suma de los importes de los pagos
+    FmTotalImportes :Double;            //suma de los importes de los pagos
   private
     procedure WriteGroupHeader;
     procedure WriteOrdenesPago(AOrdenante :TsepaOrdenante);
@@ -125,13 +102,13 @@ begin
 
        //Para el sistema de adeudos SEPA se utilizará exclusivamente la etiqueta “Otra” estructurada
        //según lo definido en el epígrafe “Identificador del presentador” de la sección 3.3
-       WriteLn(FOuputFile, '<Id>');
-       WriteLn(FOuputFile, '<OrgId>');
-       WriteLn(FOuputFile, '<Othr>');
+       WriteLn(FOuputFile, '<Id>'                    );
+       WriteLn(FOuputFile, '<OrgId>'                 );
+       WriteLn(FOuputFile, '<Othr>'                  );
        WriteLn(FOuputFile, '<Id>'+InitiatorId+'</Id>');
-       WriteLn(FOuputFile, '</Othr>');
-       WriteLn(FOuputFile, '</OrgId>');
-       WriteLn(FOuputFile, '</Id>');
+       WriteLn(FOuputFile, '</Othr>'                 );
+       WriteLn(FOuputFile, '</OrgId>'                );
+       WriteLn(FOuputFile, '</Id>'                   );
    Writeln(FOuputFile,'</InitgPty>');
 
    Writeln(FOuputFile, '</GrpHdr>');
@@ -326,20 +303,6 @@ end;
 function TDJMNorma3414XML.HayPagos;
 begin
    Result := FmTotalImportes <> 0;
-end;
-
-{ TInfoOrdenante }
-
-constructor TsepaOrdenante.Create;
-begin
-   inherited;
-   Payments := TList<TsepaPayment>.Create;
-end;
-
-destructor TsepaOrdenante.Destroy;
-begin
-   Payments.Free;
-   inherited;
 end;
 
 end.

@@ -19,3 +19,6 @@ test/D7TestSepaXML.~dsk
 test/fMain.ddp
 test/fMain.~ddp
 __history/
+/test/*.stat
+/test/*.identcache
+/test/*.local

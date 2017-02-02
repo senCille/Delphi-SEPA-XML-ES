@@ -16,13 +16,16 @@ var frMain :TfrMain;
 
 implementation
 
-uses uDJMSepa1914XML,
+uses senCille.SEPAAuxClasses,
+     uDJMSepa1914XML,
      uDJMSepa3414XML;
 
 {$R *.dfm}
 
 procedure TfrMain.btnTestNorma19Click(Sender: TObject);
 var Norma1914 :TDJMNorma1914XML;
+    Ordenante :TsepaInitiator;
+    Collect   :TsepaCollect;
 begin
    Norma1914 := TDJMNorma1914XML.Create;
    try
@@ -34,34 +37,41 @@ begin
       Norma1914.ChargeDate    := Date + 2;
 
       {Un Ordenante. Un presentador puede presentar las órdenes de varios ordenantes}
-      Norma1914.AddOrdenante('ID UNICO DE LAS ORDENES DE ESTE ORDENANTE',
-                              'EMPRESA ORDENANTE 1 S.L.'                 ,
-                              'el iban de este ordenante'                ,
-                              'BicOrdenante1'                            ,
-                              'ID.ORDENANTE'                             );
+      Ordenante := TsepaInitiator.Create;
+      Ordenante.IdOrdenante     := 'ID UNICO DE LAS ORDENES DE ESTE ORDENANTE';
+      Ordenante.NombreOrdenante := 'EMPRESA ORDENANTE 1 S.L.'                 ;
+      Ordenante.IBANOrdenante   := 'el iban de este ordenante'                ;
+      Ordenante.BICOrdenante    := 'BicOrdenante1'                            ;
+      {----------------------------------------------------------------------------------}
+      Ordenante.IdOrdenante     := 'ID.ORDENANTE'; {el ID único del ordenante, normalmente dado por el banco}
+
       //las ordenes de cobro de este ordenante
-      Norma1914.AddCobro('idCobro unico', {utilizar un nº de documento o contador, etc}
-                          1200,
-                          'id.mandato', {por ejemplo, poner un nº de contrato o del documento de la firma del mandato}
-                          StrToDate('31/10/2009')        , {esta es la fecha por defecto de los que no tienen fecha de mandato}
-                          'Bic de este Deudor'           ,
-                          'Nombre Deudor 1 S.L.'         ,
-                          'IBAN De este Deudor'          ,
-                          'Cobro de pruebas factura nº 1',
-                          'el iban de este ordenante'    ); {importante, el cobro se coloca en su ordenante/cuenta de cobro}
+      Collect := TsepaCollect.Create;
+      Collect.IdCobro         := 'idCobro unico'; {utilizar un nº de documento o contador, etc}
+      Collect.Importe         := 1200;
+      Collect.IdMandato       := 'id.mandato'; {por ejemplo, poner un nº de contrato o del documento de la firma del mandato}
+      Collect.DateOfSignature := StrToDate('31/10/2009'); {esta es la fecha por defecto de los que no tienen fecha de mandato}
+      Collect.BIC             := 'Bic de este Deudor';
+      Collect.NombreDeudor    := 'Nombre Deudor 1 S.L.';
+      Collect.IBAN            := 'IBAN De este Deudor';
+      Collect.Concepto        := 'Cobro de pruebas factura nº 1';
+      Ordenante.Collects.Add(Collect);
 
       {Segunda Orden de Cobro}
-      Norma1914.AddCobro('idCobro unico-2'              , {utilizar un nº de documento o contador, etc}
-                          230                            ,
-                          'id.mandato'                   ,
-                          StrToDate('31/10/2009')        , //esta es la fecha por defecto de los que no tienen fecha de mandato
-                          'Bic de este Deudor'           ,
-                          'Nombre Deudor 2 S.L.'         ,
-                          'IBAN De este Deudor'          ,
-                          'Cobro de pruebas factura nº 1',
-                          'el iban de este ordenante'    );//importante, el cobro se coloca en su ordenante/cuenta de cobro
+      Collect := TsepaCollect.Create;
+      Collect.IdCobro         := 'idCobro unico-2'              ; {utilizar un nº de documento o contador, etc}
+      Collect.Importe         := 230                            ;
+      Collect.IdMandato       := 'id.mandato'                   ;
+      Collect.DateOfSignature := StrToDate('31/10/2009')        ; //esta es la fecha por defecto de los que no tienen fecha de mandato
+      Collect.BIC             := 'Bic de este Deudor'           ;
+      Collect.NombreDeudor    := 'Nombre Deudor 2 S.L.'         ;
+      Collect.IBAN            := 'IBAN De este Deudor'          ;
+      Collect.Concepto        := 'Cobro de pruebas factura nº 1';
+      Ordenante.Collects.Add(Collect);
 
-      if Norma1914.HayCobros then begin {en algún algoritmo te puede ser util comprobar que has añadido cobros}
+      Norma1914.AddOrdenante(Ordenante);
+
+      if Norma1914.ThereAreOperations then begin
          Norma1914.CreateFile('test-1914.xml');
          Norma1914.CloseFile;
          ShowMessage('Fichero 1914 creado');
@@ -83,13 +93,12 @@ begin
       Norma3414.InitiatorId   := 'ID. DEL PRESENTADOR';
       Norma3414.ChargeDate    := Date + 2;
       {info del ordenante}
-      Norma3414.AddOrdenante('ID. UNICO DEL PAGO',
+      Norma3414.AddOrdenante('ID. UNICO DEL PAGO'        ,
                               'NOMBRE DEL ORDENANTE S.L.',
-                              'IBAN DEL ORDENANTE',
-                              'BIC DEL ORDENANTE'
-                              );
+                              'IBAN DEL ORDENANTE'       ,
+                              'BIC DEL ORDENANTE'        );
       {Una orden de pago}
-      Norma3414.AddPago('ID UNICO DEL PAGO'             ,
+      Norma3414.AddPago('ID UNICO DEL PAGO'              ,
                          500                             ,
                          'BIC DEL BENEFICIARIO'          ,
                          'NOMBRE DEL BENEFICIARIO 1 S.L.',
