@@ -33,7 +33,7 @@ type
 
     procedure WriteGroupHeader;
     procedure WriteOrdenesCobro(AOrdenante :TsepaInitiator);
-    procedure WriteDirectDebitOperationInfo(ACollection :TsepaCollect);
+    procedure WriteDirectDebitOperationInfo(AOperation :TsepaOperation);
 
     procedure WriteInfoMandato(sIdMandato :string; dDateOfSignature :TDateTime);
     procedure WriteIdentificacionOrdenante(AIdOrdenanteAux :string);
@@ -92,13 +92,13 @@ begin
 
        //Para el sistema de adeudos SEPA se utilizará exclusivamente la etiqueta “Otra” estructurada
        //según lo definido en el epígrafe “Identificador del presentador” de la sección 3.3
-       WriteLn(FOuputFile, '<Id>');
-       WriteLn(FOuputFile, '<OrgId>');
-       WriteLn(FOuputFile, '<Othr>');
+       WriteLn(FOuputFile, '<Id>'                    );
+       WriteLn(FOuputFile, '<OrgId>'                 );
+       WriteLn(FOuputFile, '<Othr>'                  );
        WriteLn(FOuputFile, '<Id>'+InitiatorId+'</Id>');
-       WriteLn(FOuputFile, '</Othr>');
-       WriteLn(FOuputFile, '</OrgId>');
-       WriteLn(FOuputFile, '</Id>');
+       WriteLn(FOuputFile, '</Othr>'                 );
+       WriteLn(FOuputFile, '</OrgId>'                );
+       WriteLn(FOuputFile, '</Id>'                   );
    Writeln(FOuputFile,'</InitgPty>');
 
    Writeln(FOuputFile, '</GrpHdr>');
@@ -122,7 +122,7 @@ begin
    WriteGroupHeader;
    //la info de cada Ordenante
    for Ordenante in FOrdenantes do begin
-      if Ordenante.Collects.Count > 0 then WriteOrdenesCobro(Ordenante);
+      if Ordenante.Operations.Count > 0 then WriteOrdenesCobro(Ordenante);
    end;
 
    WriteLn(FOuputFile, '</CstmrDrctDbtInitn>');
@@ -135,7 +135,7 @@ begin
 end;
 
 procedure TDJMNorma1914XML.WriteOrdenesCobro(AOrdenante :TsepaInitiator);
-var Collect :TsepaCollect;
+var Operation :TsepaOperation;
 begin
    //2.0 1..n Conjunto de características que se aplican a la parte del Ordenante de
    //las operaciones de pago incluidas en el mensaje de iniciación de adeudos directos
@@ -186,18 +186,18 @@ begin
    WriteLn(FOuputFile, '<ReqdColltnDt>'+FormatDateXML(ChargeDate)+'</ReqdColltnDt>');
 
    //2.19 Ordenante – Creditor
-   WriteLn(FOuputFile, '<Cdtr><Nm>'+CleanStr(AOrdenante.NombreOrdenante, ORDENANTE_NAME_MAX_LENGTH)+'</Nm></Cdtr>');
+   WriteLn(FOuputFile, '<Cdtr><Nm>'+CleanStr(AOrdenante.Name, ORDENANTE_NAME_MAX_LENGTH)+'</Nm></Cdtr>');
 
    //2.20 Cuenta del Ordenante – CreditorAccount
    //Identificación inequívoca de la cuenta del Ordenante (AT-04)
    WriteLn(FOuputFile, '<CdtrAcct>');
-   WriteAccountIdentification(FOuputFile, AOrdenante.IBANOrdenante);
+   WriteAccountIdentification(FOuputFile, AOrdenante.IBAN);
    WriteLn(FOuputFile, '</CdtrAcct>');
 
    //2.21 Entidad del Ordenante – CreditorAgent
    //Entidad de crédito donde el Ordenante mantiene su cuenta.
    WriteLn(FOuputFile, '<CdtrAgt>');
-   WriteBICInfo(FOuputFile, AOrdenante.BICOrdenante);
+   WriteBICInfo(FOuputFile, AOrdenante.BIC);
    WriteLn(FOuputFile, '</CdtrAgt>');
 
    //2.24 Cláusula de gastos – ChargeBearer
@@ -210,14 +210,14 @@ begin
    WriteIdentificacionOrdenante(AOrdenante.IdOrdenante);
 
    //2.28 1..n Información de la operación de adeudo directo – DirectDebitTransactionInformation
-   for Collect in AOrdenante.Collects do begin
-      WriteDirectDebitOperationInfo(Collect);
+   for Operation in AOrdenante.Operations do begin
+      WriteDirectDebitOperationInfo(Operation);
    end;
 
    WriteLn(FOuputFile, '</PmtInf>');
 end;
 
-procedure TDJMNorma1914XML.WriteDirectDebitOperationInfo(ACollection :TsepaCollect);
+procedure TDJMNorma1914XML.WriteDirectDebitOperationInfo(AOperation :TsepaOperation);
 begin
    //2.28 1..n Información de la operación de adeudo directo – DirectDebitTransactionInformation
    WriteLn(FOuputFile,  '<DrctDbtTxInf>');
@@ -228,16 +228,16 @@ begin
    //Identificación única asignada por la parte iniciadora para identificar inequívocamente
    //cada operación (AT-10). Esta referencia se transmite de extremo a extremo,
    //sin cambios, a lo largo de toda la cadena de pago
-   Writeln(FOuputFile, '<EndToEndId>'+CleanStr(ACollection.IdCobro)+'</EndToEndId>');
+   Writeln(FOuputFile, '<EndToEndId>'+CleanStr(AOperation.OpId)+'</EndToEndId>');
    Writeln(FOuputFile, '</PmtId>');
 
    //2.44 Importe ordenado – InstructedAmount
-   WriteLn(FOuputFile,  '<InstdAmt Ccy="'+'EUR'+'">'+FormatAmountXML(ACollection.Importe)+'</InstdAmt>');
+   WriteLn(FOuputFile,  '<InstdAmt Ccy="'+'EUR'+'">'+FormatAmountXML(AOperation.Import)+'</InstdAmt>');
 
    //2.46 Operación de adeudo directo – DirectDebitTransaction
    //Conjunto de elementos que suministran información específica relativa al mandato de adeudo directo
    WriteLn(FOuputFile,  '<DrctDbtTx>');
-   WriteInfoMandato(ACollection.IdMandato, ACollection.DateOfSignature);
+   WriteInfoMandato(AOperation.IdMandator, AOperation.DateOfSignature);
    WriteLn(FOuputFile,  '</DrctDbtTx>');
 
    //2.66 Identificación del Ordenante – CreditorSchemeIdentification
@@ -246,15 +246,15 @@ begin
 
    //2.70 Entidad del deudor – DebtorAgent
    WriteLn(FOuputFile,  '<DbtrAgt>');
-   WriteBICInfo(FOuputFile, ACollection.BIC);
+   WriteBICInfo(FOuputFile, AOperation.BIC);
    WriteLn(FOuputFile,  '</DbtrAgt>');
 
    //2.72 Deudor – Debtor
-   WriteLn(FOuputFile,  '<Dbtr><Nm>'+CleanStr(ACollection.NombreDeudor, DEUDOR_NAME_MAX_LENGTH)+'</Nm></Dbtr>');
+   WriteLn(FOuputFile,  '<Dbtr><Nm>'+CleanStr(AOperation.Name, DEUDOR_NAME_MAX_LENGTH)+'</Nm></Dbtr>');
 
    //2.73 Cuenta del deudor – DebtorAccount
    WriteLn(FOuputFile,  '<DbtrAcct>');
-   WriteAccountIdentification(FOuputFile, ACollection.IBAN);
+   WriteAccountIdentification(FOuputFile, AOperation.IBAN);
    WriteLn(FOuputFile,  '</DbtrAcct>');
 
    {
@@ -266,7 +266,7 @@ begin
    //2.88 Concepto – RemittanceInformation
    //Información que opcionalmente remite el Ordenante al deudor para permitirle conciliar el pago
    //con la información comercial del mismo (AT-22).
-   WriteLn(FOuputFile,  '<RmtInf><Ustrd>'+CleanStr(ACollection.Concepto, RMTINF_MAX_LENGTH)+'</Ustrd></RmtInf>');
+   WriteLn(FOuputFile,  '<RmtInf><Ustrd>'+CleanStr(AOperation.Concept, RMTINF_MAX_LENGTH)+'</Ustrd></RmtInf>');
 
    WriteLn(FOuputFile,  '</DrctDbtTxInf>');
 end;
@@ -340,7 +340,7 @@ var i :TsepaInitiator;
 begin
    Result := 0;
    for i in FOrdenantes do begin
-      Result := Result + i.Collects.Count;
+      Result := Result + i.Operations.Count;
    end;
 end;
 

@@ -6,15 +6,16 @@ uses System.Generics.Collections;
 
 type
   //info de una orden de cobro (norma 19.14 xml)
-  TsepaCollect = class {un Cobro}
-    IdCobro         :string; //id unico cobro, ejemplo:20130930Fra.509301
-    Importe         :Double;
-    IdMandato       :string;
-    DateOfSignature :TDateTime; //del mandato
+  TsepaOperation = class {un Cobro}
+    OpId            :string; //id unico cobro, ejemplo:20130930Fra.509301
+    Import          :Double;
+    Concept         :string;
     BIC             :string;
-    NombreDeudor    :string;
     IBAN            :string;
-    Concepto        :string;
+    Name            :string;
+    {--- exclusive for Collection ---}
+    IdMandator      :string;
+    DateOfSignature :TDateTime; {of the mandator}
   end;
 
   //un conjunto de cobros por Ordenante, lo utilizamos por si utilizan
@@ -22,43 +23,37 @@ type
   //cobros relacionados con este Ordenante/cuenta de abono
   TsepaInitiator = class {un Ordenante}
   private
-    FCollects :TList<TsepaCollect>;
+    FOperations :TList<TsepaOperation>; {Collects}
   public
-    PaymentId       :string; //Ejemplo: 2013-10-28_095831Remesa 218 UNICO POR Ordenante
-    NombreOrdenante :string;
-    IBANOrdenante   :string;
-    BICOrdenante    :string;
+    PaymentId :string; //Ejemplo: 2013-10-28_095831Remesa 218 UNICO POR Ordenante
+    Name      :string;
+    IBAN      :string;
+    BIC       :string;
     {----------------------------------------------------------------------------------}
-    IdOrdenante     :string; //el ID único del ordenante, normalmente dado por el banco
+    IdOrdenante :string; //el ID único del ordenante, normalmente dado por el banco
     {----------------------------------------------------------------------------------}
     constructor Create;
     destructor Destroy; override;
     function GetTotalImport:Double;
-    property Collects :TList<TsepaCollect> read FCollects write FCollects;
-  end;
-
-  //info de una orden de pago (norma 34.14 xml)
-  TsepaPayment = class
-    IdPago             :string; //id unico pago, ejemplo:20130930Fra.509301
-    Importe            :Double;
-    BICBeneficiario    :string;
-    NombreBeneficiario :string;
-    IBANBeneficiario   :string;
-    Concepto           :string;
+    property Operations :TList<TsepaOperation> read FOperations write FOperations;
   end;
 
   //un conjunto de pagos por Ordenante, lo utilizamos por si utilizan
   //pagos a cargar en diferentes cuentas (el <PmtInf> contiene la info del Ordenante, con su cuenta; y los
   //pagos relacionados con este Ordenante/cuenta de cargo
   TsepaOrdenante = class
-    PaymentId       :string; //Ejemplo: 2013-10-28_095831Remesa 218 UNICO POR Ordenante
-    SumaImportes    :Double;
-    NombreOrdenante :string;
-    IBANOrdenante   :string;
-    BICOrdenante    :string;
-    Payments        :TList<TsepaPayment>;
+  private
+    FOperations :TList<TsepaOperation>; {Payments}
+  public
+    PaymentId :string; //Ejemplo: 2013-10-28_095831Remesa 218 UNICO POR Ordenante
+    Name      :string;
+    IBAN      :string;
+    BIC       :string;
+
     constructor Create;
     destructor Destroy; reintroduce;
+    function GetTotalImport:Double;
+    property Operations :TList<TsepaOperation> read FOperations write FOperations;
   end;
 
 implementation
@@ -68,21 +63,21 @@ implementation
 constructor TsepaInitiator.Create;
 begin
    inherited;
-   Collects := TList<TsepaCollect>.Create;
+   FOperations := TList<TsepaOperation>.Create;
 end;
 
 destructor TsepaInitiator.Destroy;
 begin
-   Collects.Free;
+   Operations.Free;
    inherited;
 end;
 
 function TsepaInitiator.GetTotalImport: Double;
-var i :TsepaCollect;
+var i :TsepaOperation;
 begin
    Result := 0;
-   for i in FCollects do begin
-      Result := Result + i.Importe;
+   for i in FOperations do begin
+      Result := Result + i.Import;
    end;
 end;
 
@@ -91,13 +86,22 @@ end;
 constructor TsepaOrdenante.Create;
 begin
    inherited;
-   Payments := TList<TsepaPayment>.Create;
+   FOperations := TList<TsepaOperation>.Create;
 end;
 
 destructor TsepaOrdenante.Destroy;
 begin
-   Payments.Free;
+   FOperations.Free;
    inherited;
+end;
+
+function TsepaOrdenante.GetTotalImport: Double;
+var i :TsepaOperation;
+begin
+   Result := 0;
+   for i in FOperations do begin
+      Result := Result + i.Import;
+   end;
 end;
 
 end.
