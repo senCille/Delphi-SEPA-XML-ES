@@ -17,13 +17,13 @@ var frMain :TfrMain;
 implementation
 
 uses senCille.SEPAAuxClasses,
-     uDJMSepa1914XML,
-     uDJMSepa3414XML;
+     senCille.SEPA1914XML,
+     senCille.SEPA3414XML;
 
 {$R *.dfm}
 
 procedure TfrMain.btnTestNorma19Click(Sender: TObject);
-var Norma1914 :TDJMNorma1914XML;
+var Norma1914 :TNorma1914XML;
     Initiator :TsepaInitiator;
     Operation :TsepaOperation;
 begin
@@ -60,7 +60,7 @@ begin
    Operation.Concept         := 'Cobro de pruebas factura nº 1';
    Initiator.Operations.Add(Operation);
 
-   Norma1914 := TDJMNorma1914XML.Create;
+   Norma1914 := TNorma1914XML.Create;
    try
       {Información general del fichero}
       {El id. del identificador te lo dará el Banco, LEER LAS NORMAS SEPA!!}
@@ -83,7 +83,7 @@ begin
 end;
 
 procedure TfrMain.btnTestNorma34Click(Sender: TObject);
-var Norma3414 :TDJMNorma3414XML;
+var Norma3414 :TNorma3414XML;
     Initiator :TsepaInitiator;
     Operation :TsepaOperation;
 begin
@@ -104,7 +104,7 @@ begin
    Operation.Concept := 'Pago de su factura nº 5698'    ;
    Initiator.Operations.Add(Operation);
 
-   Norma3414 := TDJMNorma3414XML.create;
+   Norma3414 := TNorma3414XML.create;
    try
       {info del presentador}
       Norma3414.FileName      := 'test-3414.xml';

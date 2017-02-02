@@ -1,7 +1,7 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{31D22F25-6837-48E5-B7FB-1EBAC4C9D548}</ProjectGuid>
-        <MainSource>D7TestSepaXML.dpr</MainSource>
+        <MainSource>TestSepaXML.dpr</MainSource>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Debug</Config>
         <TargetedPlatforms>1025</TargetedPlatforms>
@@ -51,7 +51,7 @@
         <DCC_ImageBase>00400000</DCC_ImageBase>
         <VerInfo_Locale>3082</VerInfo_Locale>
         <DCC_S>false</DCC_S>
-        <SanitizedProjectName>D7TestSepaXML</SanitizedProjectName>
+        <SanitizedProjectName>TestSepaXML</SanitizedProjectName>
         <DCC_E>false</DCC_E>
         <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=;CFBundleName=</VerInfo_Keys>
         <DCC_K>false</DCC_K>
@@ -95,8 +95,8 @@
         <DCCReference Include="fMain.pas">
             <Form>frMain</Form>
         </DCCReference>
-        <DCCReference Include="..\uDJMSepa1914XML.pas"/>
-        <DCCReference Include="..\uDJMSepa3414XML.pas"/>
+        <DCCReference Include="..\senCille.SEPA1914XML.pas"/>
+        <DCCReference Include="..\senCille.SEPA3414XML.pas"/>
         <DCCReference Include="..\senCille.CustomSEPA.pas"/>
         <DCCReference Include="..\senCille.SEPAAuxClasses.pas"/>
         <BuildConfiguration Include="Debug">
@@ -117,7 +117,7 @@
         <BorlandProject>
             <Delphi.Personality>
                 <Source>
-                    <Source Name="MainSource">D7TestSepaXML.dpr</Source>
+                    <Source Name="MainSource">TestSepaXML.dpr</Source>
                 </Source>
             </Delphi.Personality>
             <Platforms>
@@ -126,9 +126,9 @@
                 <Platform value="Win64">False</Platform>
             </Platforms>
             <Deployment Version="2">
-                <DeployFile LocalName="D7TestSepaXML.exe" Configuration="Debug" Class="ProjectOutput">
+                <DeployFile LocalName="TestSepaXML.exe" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win32">
-                        <RemoteName>D7TestSepaXML.exe</RemoteName>
+                        <RemoteName>TestSepaXML.exe</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>

@@ -11,7 +11,7 @@ interface
 uses System.Generics.Collections;
 
 type
-  //info de una orden de cobro (norma 19.14 xml)
+  {Operación de Cobro o Pago}
   TsepaOperation = class {un Cobro}
     OpId            :string; //id unico cobro, ejemplo:20130930Fra.509301
     Import          :Double;
@@ -24,9 +24,9 @@ type
     DateOfSignature :TDateTime; {of the mandator}
   end;
 
-  //un conjunto de cobros por Ordenante, lo utilizamos por si utilizan
-  //cobros a ingresar en diferentes cuentas (el <PmtInf> contiene la info del Ordenante, con su cuenta; y los
-  //cobros relacionados con este Ordenante/cuenta de abono
+  { un conjunto de cobros por Ordenante, lo utilizamos por si utilizan                                        }
+  { cobros a ingresar en diferentes cuentas (el <PmtInf> contiene la info del Ordenante, con su cuenta; y los }
+  { cobros relacionados con este Ordenante/cuenta de abono                                                    }
   TsepaInitiator = class {un Ordenante}
   private
     FOperations :TList<TsepaOperation>; {Collects}

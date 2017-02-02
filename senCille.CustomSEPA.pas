@@ -24,20 +24,20 @@ type
   const
     SCHEMA_19                    = 'pain.008.001.02';
     SCHEMA_34                    = 'pain.001.001.03';
-    INITIATOR_NAME_MAX_LENGTH    = 70;
-    BENEFICIARIO_NAME_MAX_LENGTH = 70;
-    DEUDOR_NAME_MAX_LENGTH       = 70;
-    ORDENANTE_NAME_MAX_LENGTH    = 70;
+    INITIATOR_NAME_MAX_LENGTH    =  70;
+    BENEFICIARIO_NAME_MAX_LENGTH =  70;
+    DEUDOR_NAME_MAX_LENGTH       =  70;
+    ORDENANTE_NAME_MAX_LENGTH    =  70;
     RMTINF_MAX_LENGTH            = 140;
-    MNDTID_MAX_LENGTH            = 35;
+    MNDTID_MAX_LENGTH            =  35;
 
     function  CleanStr(AString :string; ALength :Integer = -1):string;
     procedure AddAccountId(AIBAN :string);
     procedure AddBICInfo  (ABIC  :string);
     function  GenerateUUID:string;
-    function  FormatDateTimeXML(const d :TDateTime                          ):string;
-    function  FormatAmountXML  (const d :Currency; const Digits :Integer = 2):string;
-    function  FormatDateXML    (const d :TDateTime                          ):string;
+    function  FormatDateTimeXML(const ADateTime :TDateTime                          ):string;
+    function  FormatAmountXML  (const ACurrency :Currency; const Digits :Integer = 2):string;
+    function  FormatDateXML    (const ADateTime :TDateTime                          ):string;
   public
     constructor Create;
     property FileName      :string    read FFileName      write FFileName;
@@ -129,35 +129,24 @@ begin
    else Result := IntToStr(RandomRange(10000, High(Integer)));  // fallback to simple random number
 end;
 
-function TCustomSEPA.FormatDateXML(const d: TDateTime): String;
+function TCustomSEPA.FormatDateXML(const ADateTime :TDateTime):string;
 begin
-   Result := FormatDateTime('yyyy"-"mm"-"dd', d);
+   Result := FormatDateTime('yyyy"-"mm"-"dd', ADateTime);
 end;
 
-function TCustomSEPA.FormatAmountXML(const d: Currency; const digits: Integer = 2): String;
-var OldDecimalSeparator: Char;
-    {$if CompilerVersion>22}  //superiores a xe
-    FS: TFormatSettings;
-    {$ifend}
+function TCustomSEPA.FormatAmountXML(const ACurrency :Currency; const Digits: Integer = 2):string;
+var FS              :TFormatSettings;
+    OldDecSeparator :Char;
 begin
-   {$if CompilerVersion>22}
-     OldDecimalSeparator := FS.DecimalSeparator;
-     FS.DecimalSeparator := '.';
-   {$else}
-     OldDecimalSeparator := DecimalSeparator;
-     DecimalSeparator := '.';
-   {$ifend}
-   Result := CurrToStrF(d, ffFixed, digits);
-   {$if CompilerVersion>22}
-     FS.DecimalSeparator := OldDecimalSeparator;
-   {$else}
-     DecimalSeparator := OldDecimalSeparator;
-   {$ifend}
+   OldDecSeparator := FS.DecimalSeparator;
+   FS.DecimalSeparator := '.';
+   Result := CurrToStrF(ACurrency, ffFixed, Digits);
+   FS.DecimalSeparator := OldDecSeparator;
 end;
 
-function TCustomSEPA.FormatDateTimeXML(const d: TDateTime): String;
+function TCustomSEPA.FormatDateTimeXML(const ADateTime :TDateTime):string;
 begin
-   Result := FormatDateTime('yyyy"-"mm"-"dd"T"hh":"nn":"ss"."zzz"Z"', d);
+   Result := FormatDateTime('yyyy"-"mm"-"dd"T"hh":"nn":"ss"."zzz"Z"', ADateTime);
 end;
 
 end.
