@@ -28,7 +28,11 @@ begin
    try
       {Información general del fichero}
       {El id. del identificador te lo dará el Banco, LEER LAS NORMAS SEPA!!}
-      Norma1914.SetInfoPresentador(Date, 'NOMBRE DEL PRESENTADOR S.L.', 'ID.PRESENTADOR', Date);
+      Norma1914.FileDate      := Date;
+      Norma1914.InitiatorName := 'NOMBRE DEL PRESENTADOR S.L.';
+      Norma1914.InitiatorId   := 'ID.PRESENTADOR';
+      Norma1914.ChargeDate    := Date + 2;
+
       {Un Ordenante. Un presentador puede presentar las órdenes de varios ordenantes}
       Norma1914.AddOrdenante('ID UNICO DE LAS ORDENES DE ESTE ORDENANTE',
                               'EMPRESA ORDENANTE 1 S.L.'                 ,
@@ -69,33 +73,34 @@ begin
 end;
 
 procedure TfrMain.btnTestNorma34Click(Sender: TObject);
-var oNorma3414 :TDJMNorma3414XML;
+var Norma3414 :TDJMNorma3414XML;
 begin
-   oNorma3414:=TDJMNorma3414XML.create;
+   Norma3414:=TDJMNorma3414XML.create;
    try
       {info del presentador}
-      oNorma3414.SetInfoPresentador(date,'NOMBRE DEL PRESENTADOR',
-                                    'ID. DEL PRESENTADOR',
-                                    date);
+      Norma3414.FileDate      := Date;
+      Norma3414.InitiatorName := 'NOMBRE DEL PRESENTADOR';
+      Norma3414.InitiatorId   := 'ID. DEL PRESENTADOR';
+      Norma3414.ChargeDate    := Date + 2;
       {info del ordenante}
-      oNorma3414.AddOrdenante('ID. UNICO DEL PAGO',
+      Norma3414.AddOrdenante('ID. UNICO DEL PAGO',
                               'NOMBRE DEL ORDENANTE S.L.',
                               'IBAN DEL ORDENANTE',
                               'BIC DEL ORDENANTE'
                               );
       {Una orden de pago}
-      oNorma3414.AddPago('ID UNICO DEL PAGO'             ,
+      Norma3414.AddPago('ID UNICO DEL PAGO'             ,
                          500                             ,
                          'BIC DEL BENEFICIARIO'          ,
                          'NOMBRE DEL BENEFICIARIO 1 S.L.',
                          'IBAN DEL BENEFICIARIO'         ,
                          'Pago de su factura nº 5698'    ,
                          'IBAN DEL ORDENANTE'            );{El mismo que añadimos con el ordenante}
-      oNorma3414.CreateFile('test-3414.xml');
-      oNorma3414.CloseFile;
+      Norma3414.CreateFile('test-3414.xml');
+      Norma3414.CloseFile;
       ShowMessage('Fichero 34.14 creado');
    finally
-      oNorma3414.Free;
+      Norma3414.Free;
    end;
 end;
 

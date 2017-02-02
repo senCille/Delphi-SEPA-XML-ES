@@ -11,7 +11,7 @@ Diego J.Muñoz. Freelance. Cocosistemas.com
 //un array con sus ordenes de cobro
 
 {uso:
-   - setInfoPresentador
+   - Set properties, four, with information of the Initiator.
    - Añadimos Ordenantes: addOrdenante (uno por cada cuenta de ingreso del cobro, donde nos pagan)
    - Añadimos los cobros: addCobro (uno por cada cobro, él solo se coloca en su Ordenante,
      éste ha tenido que ser añadido previamente)
@@ -51,21 +51,16 @@ type
     IdOrdenante     :string; //el ID único del ordenante, normalmente dado por el banco
     Collects        :TList<TsepaCollect>;
     constructor Create;
-    destructor Destroy; reintroduce;
+    destructor Destroy; override;
   end;
 
   //TListOrdenantes = array[1..10] of TsepaOrdenante;
 
   TDJMNorma1914XML = class(TCustomSEPA) //el Ordenante cobra al DEUDOR
   private
-    FOuputFile        :Text;
-    FOrdenantes       :TList<TsepaOrdenante>; //Ordenantes, uno por cada cuenta de abono
-    FdFileDate        :TDateTime;   //fecha del fichero
-
-    FmTotalImportes     :Double;    //suma de los importes de los cobros
-    FsNombrePresentador :string;    //nombre del presentador (el 'initiator')
-    FsIdPresentador     :string;    //id presentador norma AT02
-    FdOrdenesCobro      :TDateTime; //fecha del cargo en cuenta, PARA TODAS LAS ORDENES
+    FOuputFile  :Text;
+    FOrdenantes :TList<TsepaOrdenante>; //Ordenantes, uno por cada cuenta de abono
+    FmTotalImportes :Double;    //suma de los importes de los cobros
 
     procedure WriteGroupHeader;
     procedure WriteOrdenesCobro(AOrdenante :TsepaOrdenante);
@@ -78,11 +73,6 @@ type
   public
     constructor Create;
     destructor Destroy; reintroduce;
-    {$Message Warn 'Integrar esto en el Constructor'}
-    procedure SetInfoPresentador(dFileDate          :TDateTime;
-                                 sNombrePresentador :string;
-                                 sIdPresentador     :string;
-                                 dOrdenesCobro      :TDateTime);
     {$Message Warn 'Pasar una instancia en vez de los parámetros'}
     procedure AddOrdenante(APayMentId       :string;
                            ANombreOrdenante :string;
@@ -113,43 +103,15 @@ uses System.SysUtils, Dialogs;
 
 constructor TDJMNorma1914XML.Create;
 begin
+   inherited;
    FOrdenantes         := TList<TsepaOrdenante>.Create; //Ordenantes, uno por cada cuenta de abono
-   FdFileDate          := Now;
    FmTotalImportes     := 0;
-   FsNombrePresentador := '';
-   FsIdPresentador     := '';
-   FdOrdenesCobro      := Now;
 end;
 
 destructor TDJMNorma1914XML.Destroy;
-//var i :Integer;
-//    j :Integer;
 begin
-
- //  for i := 1 to FNumOrdenantes do begin
-      //para cada Ordenante destruimos sus cobros
-      {Not necessary yet, destroy the Collections}
-      {for j := 1 to FlistOrdenantes[i].iCobros do begin
-         FListOrdenantes[i].ListCobros[j].Free;
-      end;}
-
-      //FListOrdenantes[i].Free;
-   //end;
    FOrdenantes.Free;
    inherited Destroy;
-end;
-
-procedure TDJMNorma1914XML.SetInfoPresentador;
-begin
-   FdFileDate          := dFileDate;
-   FsNombrePresentador := sNombrePresentador;
-   FsIdPresentador     := sIdPresentador;
-   FdOrdenesCobro      := dOrdenesCobro;
-   //FsPaymentId:=sPaymentId;
-
-   //FsNombreOrdenante:=sNombreOrdenante;
-   //FsIBANOrdenante:=sIBANOrdenante;
-   //FsBICOrdenante:=sBICOrdenante;
 end;
 
 procedure TDJMNorma1914XML.WriteGroupHeader;
@@ -163,7 +125,7 @@ begin
 
    //1.2 Fecha y hora cuando la parte iniciadora ha creado un (grupo de) instrucciones de pago
    //(con 'now' es suficiente)
-   Writeln(FOuputFile, '<CreDtTm>'+FormatDateTimeXML(FdFileDate)+'</CreDtTm>');
+   Writeln(FOuputFile, '<CreDtTm>'+FormatDateTimeXML(FileDate)+'</CreDtTm>');
 
    //1.6  Número de operaciones individuales que contiene el mensaje
    Writeln(FOuputFile, '<NbOfTxs>'+IntToStr(CalculateNumOperaciones)+'</NbOfTxs>');
@@ -174,14 +136,14 @@ begin
    //1.8 Parte que presenta el mensaje. En el mensaje de presentación, puede ser el “Ordenante” o “el presentador”
    Write(FOuputFile, '<InitgPty>');
        //Nombre de la parte
-       WriteLn(FOuputFile, '<Nm>'+CleanStr(FsNombrePresentador, INITIATOR_NAME_MAX_LENGTH)+'</Nm>');
+       WriteLn(FOuputFile, '<Nm>'+CleanStr(InitiatorName, INITIATOR_NAME_MAX_LENGTH)+'</Nm>');
 
        //Para el sistema de adeudos SEPA se utilizará exclusivamente la etiqueta “Otra” estructurada
        //según lo definido en el epígrafe “Identificador del presentador” de la sección 3.3
        WriteLn(FOuputFile, '<Id>');
        WriteLn(FOuputFile, '<OrgId>');
        WriteLn(FOuputFile, '<Othr>');
-       WriteLn(FOuputFile, '<Id>'+FsIdPresentador+'</Id>');
+       WriteLn(FOuputFile, '<Id>'+InitiatorId+'</Id>');
        WriteLn(FOuputFile, '</Othr>');
        WriteLn(FOuputFile, '</OrgId>');
        WriteLn(FOuputFile, '</Id>');
@@ -269,7 +231,7 @@ begin
 
    //2.18 Fecha de cobro: RequestedCollectionDate
    //Fecha solicitada por el Ordenante para realizar el cargo en la cuenta del deudor (AT-11)
-   WriteLn(FOuputFile, '<ReqdColltnDt>'+FormatDateXML(FdOrdenesCobro)+'</ReqdColltnDt>');
+   WriteLn(FOuputFile, '<ReqdColltnDt>'+FormatDateXML(ChargeDate)+'</ReqdColltnDt>');
 
    //2.19 Ordenante – Creditor
    WriteLn(FOuputFile, '<Cdtr><Nm>'+CleanStr(AOrdenante.NombreOrdenante, ORDENANTE_NAME_MAX_LENGTH)+'</Nm></Cdtr>');

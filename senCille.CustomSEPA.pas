@@ -14,6 +14,10 @@ interface
 type
   TCustomSEPA = class
   private
+    FFileDate      :TDateTime; {Date of presentation for the file}
+    FInitiatorName :string;    {Name of the presenter ('initiator')}
+    FInitiatorID   :string;    {Id presentador norma AT02}
+    FChargeDate    :TDateTime; {Date of charge into account}
   protected
   const
     SCHEMA_19                    = 'pain.008.001.02';
@@ -33,11 +37,23 @@ type
     function  FormatAmountXML  (const d :Currency; const Digits :Integer = 2):string;
     function  FormatDateXML    (const d :TDateTime                          ):string;
   public
+    constructor Create;
+    property FileDate      :TDateTime read FFileDate      write FFileDate;
+    property InitiatorName :string    read FInitiatorName write FInitiatorName;
+    property InitiatorId   :string    read FInitiatorId   write FInitiatorId;
+    property ChargeDate    :TDateTime read FChargeDate    write FChargeDate;
   end;
 
 implementation
 
 uses System.SysUtils, System.Math;
+
+constructor TCustomSEPA.Create;
+begin
+   inherited;
+   FFileDate   := Now;
+   FChargeDate := Now + 10;
+end;
 
 function TCustomSEPA.CleanStr(AString :string; ALength :Integer = -1):string;
 var i :Integer;
