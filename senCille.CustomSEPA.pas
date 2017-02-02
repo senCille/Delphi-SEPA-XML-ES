@@ -1,24 +1,26 @@
 unit senCille.CustomSEPA;
 
-   {
-   {
-   https://github.com/sencille/Delphi-SEPA-XML-ES
-   Juan C.Cilleruelo Gonzalo. senCille.es
-   Based on a previous version donated by:
+   {https://github.com/sencille/Delphi-SEPA-XML-ES
+    Juan C.Cilleruelo Gonzalo. senCille.es
+    Based on a previous version donated by:
           https://github.com/cocosistemas/Delphi-SEPA-XML-ES
-          Diego J.Muñoz. Freelance. Cocosistemas.com
-   }
-
+          Diego J.Muñoz. Freelance. Cocosistemas.com         }
 
 interface
+
+uses System.Classes;
+
 type
   TCustomSEPA = class
   private
+    FFileName      :string;    {Fisical file name}
     FFileDate      :TDateTime; {Date of presentation for the file}
     FInitiatorName :string;    {Name of the presenter ('initiator')}
     FInitiatorID   :string;    {Id presentador norma AT02}
     FChargeDate    :TDateTime; {Date of charge into account}
   protected
+    FOutput :TStringList;
+    procedure AddLine(AText :string);
   const
     SCHEMA_19                    = 'pain.008.001.02';
     SCHEMA_34                    = 'pain.001.001.03';
@@ -30,14 +32,15 @@ type
     MNDTID_MAX_LENGTH            = 35;
 
     function  CleanStr(AString :string; ALength :Integer = -1):string;
-    procedure WriteAccountIdentification(var fTxt :TextFile; sIBAN :string);
-    procedure WriteBICInfo(var fTxt :TextFile; sBIC :string);
+    procedure AddAccountId(AIBAN :string);
+    procedure AddBICInfo  (ABIC  :string);
     function  GenerateUUID:string;
     function  FormatDateTimeXML(const d :TDateTime                          ):string;
     function  FormatAmountXML  (const d :Currency; const Digits :Integer = 2):string;
     function  FormatDateXML    (const d :TDateTime                          ):string;
   public
     constructor Create;
+    property FileName      :string    read FFileName      write FFileName;
     property FileDate      :TDateTime read FFileDate      write FFileDate;
     property InitiatorName :string    read FInitiatorName write FInitiatorName;
     property InitiatorId   :string    read FInitiatorId   write FInitiatorId;
@@ -53,6 +56,11 @@ begin
    inherited;
    FFileDate   := Now;
    FChargeDate := Now + 10;
+end;
+
+procedure TCustomSEPA.AddLine(AText: string);
+begin
+   FOutput.Add(AText);
 end;
 
 function TCustomSEPA.CleanStr(AString :string; ALength :Integer = -1):string;
@@ -97,17 +105,14 @@ begin
    if (ALength >= 0) and (Length(Result) > ALength) then Result := Copy(Result, 1, ALength);
 end;
 
-procedure TCustomSEPA.WriteAccountIdentification(var fTxt :TextFile; sIBAN :string);
+procedure TCustomSEPA.AddAccountId(AIBAN :string);
 begin
-   WriteLn(FTxt, '<Id><IBAN>'+CleanStr(sIBAN)+'</IBAN></Id>');
+   AddLine('<Id><IBAN>'+CleanStr(AIBAN)+'</IBAN></Id>');
 end;
 
-procedure TCustomSEPA.WriteBICInfo(var fTxt :TextFile; sBIC :string);
+procedure TCustomSEPA.AddBICInfo(ABIC :string);
 begin
-  {if (BIC = '') and (OthrID <> '') then
-     WriteLn(FsTxt, '<FinInstnId><Othr><Id>'+uSEPA_CleanString(OthrID)+'</Id></Othr></FinInstnId>')
-   else}
-   WriteLn(FTxt, '<FinInstnId><BIC>'+CleanStr(sBIC)+'</BIC></FinInstnId>');
+   AddLine('<FinInstnId><BIC>'+CleanStr(ABIC)+'</BIC></FinInstnId>');
 end;
 
 function TCustomSEPA.GenerateUUID:string;

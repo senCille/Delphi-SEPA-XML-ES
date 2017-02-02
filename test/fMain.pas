@@ -64,16 +64,16 @@ begin
    try
       {Información general del fichero}
       {El id. del identificador te lo dará el Banco, LEER LAS NORMAS SEPA!!}
+      Norma1914.FileName      := 'test-1914.xml';
       Norma1914.FileDate      := Date;
       Norma1914.InitiatorName := 'NOMBRE DEL PRESENTADOR S.L.';
       Norma1914.InitiatorId   := 'ID.PRESENTADOR';
       Norma1914.ChargeDate    := Date + 2;
 
-      Norma1914.AddInitiator(Initiator);
+      Norma1914.Initiators.Add(Initiator);
 
       if Norma1914.ThereAreOperations then begin
-         Norma1914.CreateFile('test-1914.xml');
-         Norma1914.CloseFile;
+         Norma1914.SaveToFile;
          ShowMessage('Fichero 1914 creado');
       end
       else ShowMessage('No hay cobros');
@@ -107,15 +107,15 @@ begin
    Norma3414 := TDJMNorma3414XML.create;
    try
       {info del presentador}
+      Norma3414.FileName      := 'test-3414.xml';
       Norma3414.FileDate      := Date;
       Norma3414.InitiatorName := 'NOMBRE DEL PRESENTADOR';
       Norma3414.InitiatorId   := 'ID. DEL PRESENTADOR';
       Norma3414.ChargeDate    := Date + 2;
 
-      Norma3414.AddInitiator(Initiator);
+      Norma3414.Initiators.Add(Initiator);
 
-      Norma3414.CreateFile('test-3414.xml');
-      Norma3414.CloseFile;
+      Norma3414.SaveToFile;
       ShowMessage('Fichero 34.14 creado');
    finally
       Norma3414.Free;

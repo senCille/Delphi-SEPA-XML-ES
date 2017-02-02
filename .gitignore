@@ -22,3 +22,4 @@ __history/
 /test/*.stat
 /test/*.identcache
 /test/*.local
+/*.dcu

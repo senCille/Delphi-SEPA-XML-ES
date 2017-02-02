@@ -1,5 +1,11 @@
 unit senCille.SEPAAuxClasses;
 
+   {https://github.com/sencille/Delphi-SEPA-XML-ES
+    Juan C.Cilleruelo Gonzalo. senCille.es
+    Based on a previous version donated by:
+          https://github.com/cocosistemas/Delphi-SEPA-XML-ES
+          Diego J.Muñoz. Freelance. Cocosistemas.com         }
+
 interface
 
 uses System.Generics.Collections;
@@ -41,7 +47,6 @@ type
 implementation
 
 { TsepaInitiator }
-
 constructor TsepaInitiator.Create;
 begin
    inherited;
