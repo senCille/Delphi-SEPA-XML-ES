@@ -28,7 +28,7 @@ begin
    try
       {Información general del fichero}
       {El id. del identificador te lo dará el Banco, LEER LAS NORMAS SEPA!!}
-      oNorma1914.SetInfoPresentador(Date,'NOMBRE DEL PRESENTADOR S.L.', 'ID.PRESENTADOR', Date);
+      oNorma1914.SetInfoPresentador(Date, 'NOMBRE DEL PRESENTADOR S.L.', 'ID.PRESENTADOR', Date);
       {Un Ordenante. Un presentador puede presentar las órdenes de varios ordenantes}
       oNorma1914.AddOrdenante('ID UNICO DE LAS ORDENES DE ESTE ORDENANTE',
                               'EMPRESA ORDENANTE 1 S.L.'                 ,

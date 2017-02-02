@@ -23,7 +23,7 @@ uses SysUtils, Math;
 
 function uSEPA_FormatDateXML(const d: TDateTime): String;
 begin
-  Result := FormatDateTime('yyyy"-"mm"-"dd', d);
+   Result := FormatDateTime('yyyy"-"mm"-"dd', d);
 end;
 
 function uSEPA_FormatAmountXML(const d: Currency; const digits: Integer = 2): String;
@@ -71,31 +71,31 @@ var i    :Integer;
     sOut :string;
 begin
    sOut:=sIn;
-   sOut := StringReplace(sOut,'á','a',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'Á','A',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'é','e',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'É','E',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'í','i',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'Í','I',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'ó','o',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'Ó','O',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'ú','u',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'Ú','U',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'Á','A',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'é','e',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'É','E',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'í','i',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'Í','I',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'ó','o',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'Ó','O',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'ú','u',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'Ú','U',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'Ö','O',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'ö','o',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'Ñ','N',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'ñ','n',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'Ç','C',[rfReplaceAll]);
-   sOut := StringReplace(sOut,'ç','c',[rfReplaceAll]);
+   sOut := StringReplace(sOut, 'á', 'a', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'Á', 'A', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'é', 'e', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'É', 'E', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'í', 'i', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'Í', 'I', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'ó', 'o', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'Ó', 'O', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'ú', 'u', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'Ú', 'U', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'Á', 'A', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'é', 'e', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'É', 'E', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'í', 'i', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'Í', 'I', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'ó', 'o', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'Ó', 'O', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'ú', 'u', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'Ú', 'U', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'Ö', 'O', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'ö', 'o', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'Ñ', 'N', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'ñ', 'n', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'Ç', 'C', [rfReplaceAll]);
+   sOut := StringReplace(sOut, 'ç', 'c', [rfReplaceAll]);
 
    // Recorrer el sOut para eliminar los caracteres no permitidos
    for i := 1 to Length(sOut) do begin
