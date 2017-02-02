@@ -92,7 +92,7 @@ type
                       sIBANBeneficiario   :string;
                       sConcepto           :string;
                       sIBANOrdenante      :string); //el pago lo colocamos en la info de su Ordenante, por la cuenta
-    procedure CreateFile(sFileName:string);
+    procedure CreateFile(AFileName :string);
     procedure CloseFile;
     function HayPagos :Boolean;
     //pone a cero listas e importe
@@ -166,11 +166,11 @@ begin
 end;
 
 
-procedure TDJMNorma3414XML.CreateFile;
+procedure TDJMNorma3414XML.CreateFile(AFileName :string);
 var iOrdenante :Integer;
 begin
-   FsFileName := sFileName;
-   AssignFile(FsTxt,sFileName);
+   FsFileName := AFileName;
+   AssignFile(FsTxt, AFileName);
    Rewrite(FsTxt);
    WriteLn(FsTxt, '<?xml version="1.0" encoding="UTF-8"?>');
 
