@@ -5,7 +5,7 @@ Diego J.Muñoz. Freelance. Cocosistemas.com
 }
 //2016-01-15
 //ver los pdfs de los bancos, con la norma.
-//19.14 cobros. EL Ordenante COBRA AL DEUDOR
+//19.14 cobros. El Initiator COBRA AL DEUDOR
 
 //Tenemos un array de Ordenantes (**cada uno con un IBAN de abono**), y para cada Ordenante
 //un array con sus ordenes de cobro
@@ -29,26 +29,27 @@ type
   TDJMNorma1914XML = class(TCustomSEPA) //el Ordenante cobra al DEUDOR
   private
     FOuputFile  :Text;
-    FOrdenantes :TList<TsepaInitiator>; //Ordenantes, uno por cada cuenta de abono
+    FInitiators :TList<TsepaInitiator>; //Ordenantes, uno por cada cuenta de abono
 
     procedure WriteGroupHeader;
-    procedure WriteOrdenesCobro(AOrdenante :TsepaInitiator);
+    procedure WriteOrdenesCobro(AInitiator :TsepaInitiator);
     procedure WriteDirectDebitOperationInfo(AOperation :TsepaOperation);
 
-    procedure WriteInfoMandato(sIdMandato :string; dDateOfSignature :TDateTime);
-    procedure WriteIdentificacionOrdenante(AIdOrdenanteAux :string);
+    procedure WriteInfoMandator(AIdMandator  :string; ADateOfSignature :TDateTime);
+    procedure WriteIdInitiator (AIdInitiator :string);
 
     function GetNumOperations:Integer;
     function GetTotalImport  :Double;
   public
     constructor Create;
     destructor Destroy; reintroduce;
-    procedure AddOrdenante(AOrdenante :TsepaInitiator);
+    procedure AddInitiator(AInitiator :TsepaInitiator);
+
     procedure CreateFile(AFileName :string);
     procedure CloseFile;
     function ThereAreOperations:Boolean;
 
-    property Ordenantes :TList<TsepaInitiator> read FOrdenantes;
+    property Initiators :TList<TsepaInitiator> read FInitiators;
   end;
 
 implementation
@@ -57,12 +58,12 @@ uses System.SysUtils, Dialogs;
 constructor TDJMNorma1914XML.Create;
 begin
    inherited;
-   FOrdenantes := TList<TsepaInitiator>.Create; //Ordenantes, uno por cada cuenta de abono
+   FInitiators := TList<TsepaInitiator>.Create; //Ordenantes, uno por cada cuenta de abono
 end;
 
 destructor TDJMNorma1914XML.Destroy;
 begin
-   FOrdenantes.Free;
+   FInitiators.Free;
    inherited Destroy;
 end;
 
@@ -106,7 +107,7 @@ end;
 
 
 procedure TDJMNorma1914XML.CreateFile(AFileName :string);
-var Ordenante :TsepaInitiator;
+var Initiator :TsepaInitiator;
 begin
    //FsFileName := AFileName;
    AssignFile(FOuputFile, AFileName);
@@ -121,8 +122,8 @@ begin
    WriteLn(FOuputFile, '<CstmrDrctDbtInitn>');
    WriteGroupHeader;
    //la info de cada Ordenante
-   for Ordenante in FOrdenantes do begin
-      if Ordenante.Operations.Count > 0 then WriteOrdenesCobro(Ordenante);
+   for Initiator in FInitiators do begin
+      if Initiator.Operations.Count > 0 then WriteOrdenesCobro(Initiator);
    end;
 
    WriteLn(FOuputFile, '</CstmrDrctDbtInitn>');
@@ -134,7 +135,7 @@ begin
    Close(FOuputFile);
 end;
 
-procedure TDJMNorma1914XML.WriteOrdenesCobro(AOrdenante :TsepaInitiator);
+procedure TDJMNorma1914XML.WriteOrdenesCobro(AInitiator :TsepaInitiator);
 var Operation :TsepaOperation;
 begin
    //2.0 1..n Conjunto de características que se aplican a la parte del Ordenante de
@@ -143,7 +144,7 @@ begin
 
    //2.1 Referencia única, asignada por el presentador, para identificar inequívocamente
    //el bloque de información del pago dentro del mensaje
-   WriteLn(FOuputFile, '<PmtInfId>'+CleanStr(AOrdenante.PaymentId)+'</PmtInfId>');
+   WriteLn(FOuputFile, '<PmtInfId>'+CleanStr(AInitiator.PaymentId)+'</PmtInfId>');
 
    //2.2 Especifica el medio de pago que se utiliza para mover los fondos.
    //Fijo a DD
@@ -156,7 +157,7 @@ begin
 
    //2.5 Suma total de todos los importes individuales incluidos en el bloque ‘Información del pago’,
    //sin tener en cuenta la divisa de los importes. No lo ponemos
-   //writeLn(FOuputFile, '<CtrlSum>'+SEPAFormatAmount(oOrdenante.mSumaImportes)+'</CtrlSum>');
+   //writeLn(FOuputFile, '<CtrlSum>'+SEPAFormatAmount(Initiators.mSumaImportes)+'</CtrlSum>');
 
    //2.6 Información del tipo de pago
    WriteLn(FOuputFile, '<PmtTpInf>');
@@ -186,18 +187,18 @@ begin
    WriteLn(FOuputFile, '<ReqdColltnDt>'+FormatDateXML(ChargeDate)+'</ReqdColltnDt>');
 
    //2.19 Ordenante – Creditor
-   WriteLn(FOuputFile, '<Cdtr><Nm>'+CleanStr(AOrdenante.Name, ORDENANTE_NAME_MAX_LENGTH)+'</Nm></Cdtr>');
+   WriteLn(FOuputFile, '<Cdtr><Nm>'+CleanStr(AInitiator.Name, ORDENANTE_NAME_MAX_LENGTH)+'</Nm></Cdtr>');
 
    //2.20 Cuenta del Ordenante – CreditorAccount
    //Identificación inequívoca de la cuenta del Ordenante (AT-04)
    WriteLn(FOuputFile, '<CdtrAcct>');
-   WriteAccountIdentification(FOuputFile, AOrdenante.IBAN);
+   WriteAccountIdentification(FOuputFile, AInitiator.IBAN);
    WriteLn(FOuputFile, '</CdtrAcct>');
 
    //2.21 Entidad del Ordenante – CreditorAgent
    //Entidad de crédito donde el Ordenante mantiene su cuenta.
    WriteLn(FOuputFile, '<CdtrAgt>');
-   WriteBICInfo(FOuputFile, AOrdenante.BIC);
+   WriteBICInfo(FOuputFile, AInitiator.BIC);
    WriteLn(FOuputFile, '</CdtrAgt>');
 
    //2.24 Cláusula de gastos – ChargeBearer
@@ -207,10 +208,10 @@ begin
 
 
    //2.27 Identificación del Ordenante – CreditorSchemeIdentification
-   WriteIdentificacionOrdenante(AOrdenante.IdOrdenante);
+   WriteIdInitiator(AInitiator.IdInitiator);
 
    //2.28 1..n Información de la operación de adeudo directo – DirectDebitTransactionInformation
-   for Operation in AOrdenante.Operations do begin
+   for Operation in AInitiator.Operations do begin
       WriteDirectDebitOperationInfo(Operation);
    end;
 
@@ -237,12 +238,12 @@ begin
    //2.46 Operación de adeudo directo – DirectDebitTransaction
    //Conjunto de elementos que suministran información específica relativa al mandato de adeudo directo
    WriteLn(FOuputFile,  '<DrctDbtTx>');
-   WriteInfoMandato(AOperation.IdMandator, AOperation.DateOfSignature);
+   WriteInfoMandator(AOperation.IdMandator, AOperation.DateOfSignature);
    WriteLn(FOuputFile,  '</DrctDbtTx>');
 
    //2.66 Identificación del Ordenante – CreditorSchemeIdentification
    //es como el 2.27. No lo ponemos porque ya ponemos el 2.27
-   //writeIdentificacionOrdenante(AIdOrdenanteAux);
+   //WriteIdInitiator(AIdOrdenanteAux);
 
    //2.70 Entidad del deudor – DebtorAgent
    WriteLn(FOuputFile,  '<DbtrAgt>');
@@ -271,15 +272,15 @@ begin
    WriteLn(FOuputFile,  '</DrctDbtTxInf>');
 end;
 
-procedure TDJMNorma1914XML.writeInfoMandato;
+procedure TDJMNorma1914XML.WriteInfoMandator(AIdMandator  :string; ADateOfSignature :TDateTime);
 begin
    //2.47 Información del mandato – MandateRelatedInformation
    WriteLn(FOuputFile, '<MndtRltdInf>');
    //2.48 Identificación del mandato – MandateIdentification.
    //Por ejemplo un nº o algo así
-   WriteLn(FOuputFile, '<MndtId>'+CleanStr(sIdMandato, MNDTID_MAX_LENGTH)+'</MndtId>');
+   WriteLn(FOuputFile, '<MndtId>'+CleanStr(AIdMandator, MNDTID_MAX_LENGTH)+'</MndtId>');
    //2.49 Fecha de firma – DateOfSignature
-   WriteLn(FOuputFile, '<DtOfSgntr>'+FormatDateXML(dDateOfSignature)+'</DtOfSgntr>');
+   WriteLn(FOuputFile, '<DtOfSgntr>'+FormatDateXML(ADateOfSignature)+'</DtOfSgntr>');
    //2.50 Indicador de modificación – AmendmentIndicator
    WriteLn(FOuputFile, '<AmdmntInd>'+'false'+'</AmdmntInd>');
    {
@@ -289,57 +290,16 @@ begin
    WriteLn(FOuputFile, '</MndtRltdInf>');
 end;
 
-(*procedure TDJMNorma1914XML.AddCobro(AIdCobro         :string; //id unico cobro, ejemplo:20130930Fra.509301
-                                    AImporte         :Double;
-                                    AIdMandato       :string;
-                                    ADateOfSignature :TDateTime; //del mandato
-                                    ABIC             :string;
-                                    ANombreDeudor    :string;
-                                    AIBAN            :string;
-                                    AConcepto        :string;
-                                    AIBANOrdenante   :string); //el cobro lo colocamos en la info de su Ordenante, por la cuenta
-var Found         :Integer;
-    i             :Integer;
-    NewCollection :TsepaCollect;
+procedure TDJMNorma1914XML.AddInitiator(AInitiator :TsepaInitiator);
 begin
-   //localizar en la lista de Ordenantes el iban, añadirlo en los cobros de ese Ordenante
-   Found := -1;
-   for i := 0 to FOrdenantes.Count-1 do begin
-      if FOrdenantes[i].IBANOrdenante = AIBANOrdenante then begin
-         Found := i;
-      end;
-   end;
-
-   if Found = -1 then begin
-      ShowMessage('No se encontró Ordenante para el IBAN: '+AIBANOrdenante);
-      Exit;
-   end;
-
-   //hemos encontrado el Ordenante con ese IBAN, añadimos un cobro
-   NewCollection := TsepaCollect.Create;
-   NewCollection.IdCobro         := AIdCobro;
-   NewCollection.Importe         := AImporte;
-   NewCollection.IdMandato       := AIdMandato;
-   NewCollection.DateOfSignature := ADateOfSignature;
-   NewCollection.BIC             := ABIC;
-   NewCollection.NombreDeudor    := ANombreDeudor;
-   NewCollection.IBAN            := Trim(AIBAN);
-   NewCollection.Concepto        := AConcepto;
-
-   FOrdenantes[Found].Collects.Add(NewCollection);
-   FmTotalImportes := FmTotalImportes + AImporte;
-end;*)
-
-procedure TDJMNorma1914XML.AddOrdenante(AOrdenante :TsepaInitiator);
-begin
-   FOrdenantes.Add(AOrdenante);
+   FInitiators.Add(AInitiator);
 end;
 
 function TDJMNorma1914XML.GetNumOperations:Integer;
 var i :TsepaInitiator;
 begin
    Result := 0;
-   for i in FOrdenantes do begin
+   for i in FInitiators do begin
       Result := Result + i.Operations.Count;
    end;
 end;
@@ -348,7 +308,7 @@ function TDJMNorma1914XML.GetTotalImport:Double;
 var i :TsepaInitiator;
 begin
    Result := 0;
-   for i in FOrdenantes do begin
+   for i in FInitiators do begin
       Result := Result + i.GetTotalImport;
    end;
 end;
@@ -358,13 +318,13 @@ begin
    Result := GetTotalImport <> 0;
 end;
 
-procedure TDJMNorma1914XML.WriteIdentificacionOrdenante(AIdOrdenanteAux :string);
+procedure TDJMNorma1914XML.WriteIdInitiator(AIdInitiator :string);
 begin
    WriteLn(FOuputFile, '<CdtrSchmeId>');
    WriteLn(FOuputFile, '<Id>'         );
    WriteLn(FOuputFile, '<PrvtId>'     );
    WriteLn(FOuputFile, '<Othr>'       );
-   WriteLn(FOuputFile, '<Id>' + CleanStr(AIdOrdenanteAux) + '</Id>');
+   WriteLn(FOuputFile, '<Id>' + CleanStr(AIdInitiator) + '</Id>');
    WriteLn(FOuputFile, '<SchmeNm><Prtry>SEPA</Prtry></SchmeNm>');
    WriteLn(FOuputFile, '</Othr>'       );
    WriteLn(FOuputFile, '</PrvtId>'     );

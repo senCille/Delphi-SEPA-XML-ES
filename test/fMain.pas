@@ -29,12 +29,12 @@ var Norma1914 :TDJMNorma1914XML;
 begin
    {Un Ordenante. Un presentador puede presentar las órdenes de varios ordenantes}
    Initiator := TsepaInitiator.Create;
-   Initiator.IdOrdenante := 'ID UNICO DE LAS ORDENES DE ESTE ORDENANTE';
+   Initiator.IdInitiator := 'ID UNICO DE LAS ORDENES DE ESTE ORDENANTE';
    Initiator.Name        := 'EMPRESA ORDENANTE 1 S.L.'                 ;
    Initiator.IBAN        := 'el iban de este ordenante'                ;
    Initiator.BIC         := 'BicOrdenante1'                            ;
    {----------------------------------------------------------------------------------}
-   Initiator.IdOrdenante     := 'ID.ORDENANTE'; {el ID único del ordenante, normalmente dado por el banco}
+   Initiator.IdInitiator := 'ID.ORDENANTE'; {el ID único del ordenante, normalmente dado por el banco}
 
    //las ordenes de cobro de este ordenante
    Operation := TsepaOperation.Create;
@@ -69,7 +69,7 @@ begin
       Norma1914.InitiatorId   := 'ID.PRESENTADOR';
       Norma1914.ChargeDate    := Date + 2;
 
-      Norma1914.AddOrdenante(Initiator);
+      Norma1914.AddInitiator(Initiator);
 
       if Norma1914.ThereAreOperations then begin
          Norma1914.CreateFile('test-1914.xml');
@@ -87,6 +87,23 @@ var Norma3414 :TDJMNorma3414XML;
     Initiator :TsepaInitiator;
     Operation :TsepaOperation;
 begin
+   Initiator := TsepaInitiator.Create;
+   Initiator.IdInitiator := 'ID. UNICO DEL PAGO'       ;
+   Initiator.Name        := 'NOMBRE DEL ORDENANTE S.L.';
+   Initiator.IBAN        := 'IBAN DEL ORDENANTE'       ;
+   Initiator.BIC         := 'BIC DEL ORDENANTE'        ;
+   {----------------------------------------------------------------------------------}
+   Initiator.IdInitiator := 'ID.ORDENANTE'; {el ID único del ordenante, normalmente dado por el banco}
+
+   Operation := TsepaOperation.Create;
+   Operation.OpId    := 'ID UNICO DEL PAGO'             ; {utilizar un nº de documento o contador, etc}
+   Operation.Import  := 500                             ;
+   Operation.BIC     := 'BIC DEL BENEFICIARIO'          ;
+   Operation.Name    := 'NOMBRE DEL BENEFICIARIO 1 S.L.';
+   Operation.IBAN    := 'IBAN DEL BENEFICIARIO'         ;
+   Operation.Concept := 'Pago de su factura nº 5698'    ;
+   Initiator.Operations.Add(Operation);
+
    Norma3414 := TDJMNorma3414XML.create;
    try
       {info del presentador}
@@ -95,25 +112,8 @@ begin
       Norma3414.InitiatorId   := 'ID. DEL PRESENTADOR';
       Norma3414.ChargeDate    := Date + 2;
 
+      Norma3414.AddInitiator(Initiator);
 
-
-
-
-
-
-      {info del ordenante}
-      Norma3414.AddOrdenante('ID. UNICO DEL PAGO'        ,
-                              'NOMBRE DEL ORDENANTE S.L.',
-                              'IBAN DEL ORDENANTE'       ,
-                              'BIC DEL ORDENANTE'        );
-      {Una orden de pago}
-      Norma3414.AddPago('ID UNICO DEL PAGO'              ,
-                         500                             ,
-                         'BIC DEL BENEFICIARIO'          ,
-                         'NOMBRE DEL BENEFICIARIO 1 S.L.',
-                         'IBAN DEL BENEFICIARIO'         ,
-                         'Pago de su factura nº 5698'    ,
-                         'IBAN DEL ORDENANTE'            );{El mismo que añadimos con el ordenante}
       Norma3414.CreateFile('test-3414.xml');
       Norma3414.CloseFile;
       ShowMessage('Fichero 34.14 creado');

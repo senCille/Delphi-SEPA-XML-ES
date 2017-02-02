@@ -29,29 +29,11 @@ type
     Name      :string;
     IBAN      :string;
     BIC       :string;
-    {----------------------------------------------------------------------------------}
-    IdOrdenante :string; //el ID único del ordenante, normalmente dado por el banco
-    {----------------------------------------------------------------------------------}
+    {--- Exlusive for Collection ---}
+    IdInitiator :string; //el ID único del ordenante, normalmente dado por el banco
+    {-------------------------------}
     constructor Create;
     destructor Destroy; override;
-    function GetTotalImport:Double;
-    property Operations :TList<TsepaOperation> read FOperations write FOperations;
-  end;
-
-  //un conjunto de pagos por Ordenante, lo utilizamos por si utilizan
-  //pagos a cargar en diferentes cuentas (el <PmtInf> contiene la info del Ordenante, con su cuenta; y los
-  //pagos relacionados con este Ordenante/cuenta de cargo
-  TsepaOrdenante = class
-  private
-    FOperations :TList<TsepaOperation>; {Payments}
-  public
-    PaymentId :string; //Ejemplo: 2013-10-28_095831Remesa 218 UNICO POR Ordenante
-    Name      :string;
-    IBAN      :string;
-    BIC       :string;
-
-    constructor Create;
-    destructor Destroy; reintroduce;
     function GetTotalImport:Double;
     property Operations :TList<TsepaOperation> read FOperations write FOperations;
   end;
@@ -73,29 +55,6 @@ begin
 end;
 
 function TsepaInitiator.GetTotalImport: Double;
-var i :TsepaOperation;
-begin
-   Result := 0;
-   for i in FOperations do begin
-      Result := Result + i.Import;
-   end;
-end;
-
-{ TInfoOrdenante }
-
-constructor TsepaOrdenante.Create;
-begin
-   inherited;
-   FOperations := TList<TsepaOperation>.Create;
-end;
-
-destructor TsepaOrdenante.Destroy;
-begin
-   FOperations.Free;
-   inherited;
-end;
-
-function TsepaOrdenante.GetTotalImport: Double;
 var i :TsepaOperation;
 begin
    Result := 0;

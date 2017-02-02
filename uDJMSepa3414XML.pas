@@ -14,7 +14,7 @@ Diego J.Muñoz. Freelance. Cocosistemas.com
 {
 uso:
   Set Initial values for Initiator. Four properties.
-- Añadimos Ordenante: addOrdenante (uno por cada cuenta de cargo del pago, donde nos cargan lo pagado)
+- Añadimos Ordenante: addInitiator (uno por cada cuenta de cargo del pago, donde nos cargan lo pagado)
 - Añadimos los pagos: addPago (uno por cada pago, el solo se coloca en su Ordenante, éste ha tenido que
 ser añadido previamente)
 - createfile (las ordenes estan en los arrays)
@@ -30,31 +30,20 @@ uses System.Generics.Collections,
 type
   TDJMNorma3414XML = class(TCustomSEPA) //el Ordenante paga al Beneficiario
     FOuputFile  :Text;
-    FOrdenantes :TList<TsepaOrdenante>; //Ordenantes, uno por cada cuenta de cargo
-    FmTotalImportes :Double;            //suma de los importes de los pagos
+    FInitiators :TList<TsepaInitiator>; //Ordenantes, uno por cada cuenta de cargo
   private
     procedure WriteGroupHeader;
-    procedure WriteOrdenesPago(AOrdenante :TsepaOrdenante);
+    procedure WriteOrdenesPago(AOrdenante :TsepaInitiator);
     procedure WriteCreditTransferOperationInfo(AOperation :TsepaOperation);
 
     function GetNumOperations:Integer;
     function GetTotalImport  :Double;
   public
-    property Ordenantes :TList<TsepaOrdenante> read FOrdenantes;
+    property Initiators :TList<TsepaInitiator> read FInitiators;
     constructor Create;
     destructor Destroy; override;
-    procedure AddOrdenante(PayMentId       :string;
-                           NombreOrdenante :string;
-                           IBANOrdenante   :string;
-                           BICOrdenante    :string);
+    procedure AddInitiator(AInitiator :TsepaInitiator);
 
-    procedure AddPago(IdPago             :string; //id unico pago, ejemplo:20130930Fra.509301
-                      Importe            :Double;
-                      BICBeneficiario    :string;
-                      NombreBeneficiario :string;
-                      IBANBeneficiario   :string;
-                      Concepto           :string;
-                      IBANOrdenante      :string); //el pago lo colocamos en la info de su Ordenante, por la cuenta
     procedure CreateFile(AFileName :string);
     procedure CloseFile;
     function ThereAreOperations:Boolean;
@@ -67,13 +56,12 @@ uses SysUtils, Windows, Dialogs;
 constructor TDJMNorma3414XML.Create;
 begin
    inherited;
-   FOrdenantes := TList<TsepaOrdenante>.Create;
-   FmTotalImportes := 0;
+   FInitiators := TList<TsepaInitiator>.Create;
 end;
 
 destructor TDJMNorma3414XML.Destroy;
 begin
-   FOrdenantes.Free;
+   FInitiators.Free;
    inherited Destroy;
 end;
 
@@ -94,7 +82,7 @@ begin
    Writeln(FOuputFile, '<NbOfTxs>'+IntToStr(GetNumOperations)+'</NbOfTxs>');
 
    //1.7 Suma total de todos los importes individuales incluidos en el mensaje
-   writeLn(FOuputFile, '<CtrlSum>'+FormatAmountXML(FmTotalImportes)+'</CtrlSum>');
+   writeLn(FOuputFile, '<CtrlSum>'+FormatAmountXML(GetTotalImport)+'</CtrlSum>');
 
    //1.8 Parte que presenta el mensaje. En el mensaje de presentación, puede ser el “Ordenante” o “el presentador”
    Write(FOuputFile, '<InitgPty>');
@@ -117,7 +105,7 @@ end;
 
 
 procedure TDJMNorma3414XML.CreateFile(AFileName :string);
-var i :TsepaOrdenante;
+var i :TsepaInitiator;
 begin
    AssignFile(FOuputFile, AFileName);
    Rewrite(FOuputFile);
@@ -131,7 +119,7 @@ begin
    WriteGroupHeader;
 
    //la info de cada Ordenante
-   for i in FOrdenantes do begin
+   for i in FInitiators do begin
       if i.Operations.Count > 0 then WriteOrdenesPago(i);
    end;
 
@@ -144,7 +132,7 @@ begin
    Close(FOuputFile);
 end;
 
-procedure TDJMNorma3414XML.writeOrdenesPago(AOrdenante :TsepaOrdenante);
+procedure TDJMNorma3414XML.WriteOrdenesPago(AOrdenante :TsepaInitiator);
 var i :TsepaOperation;
 begin
    //2.0 Información del pago - PaymentInformation
@@ -228,81 +216,25 @@ begin
    WriteLn(FOuputFile, '</CdtTrfTxInf>');
 end;
 
-procedure TDJMNorma3414XML.AddPago(IdPago             :string; //id unico pago, ejemplo:20130930Fra.509301
-                                   Importe            :Double;
-                                   BICBeneficiario    :string;
-                                   NombreBeneficiario :string;
-                                   IBANBeneficiario   :string;
-                                   Concepto           :string;
-                                   IBANOrdenante      :string); //el pago lo colocamos en la info de su Ordenante, por la cuenta
-var Found         :Integer;
-    iOrdenanteAux :Integer;
-    NewPayment    :TsepaOperation;
+procedure TDJMNorma3414XML.AddInitiator(AInitiator :TsepaInitiator);
 begin
-   //localizar en el arry de Ordenantes el iban, añadirlo en los pagos de ese Ordenante
-   Found := -1;
-   for iOrdenanteAux := 0 to FOrdenantes.Count -1 do begin
-      if FOrdenantes[iOrdenanteAux].IBAN = IBANOrdenante then begin
-         Found := iOrdenanteAux;
-      end;
-   end;
-
-   if Found = -1 then begin
-      ShowMessage('No se encontró Ordenante para el IBAN: '+IBANOrdenante);
-      Exit;
-   end;
-
-   //hemos encontrado el Ordenante con ese IBAN, añadimos un pago
-   NewPayment := TsepaOperation.Create;
-   NewPayment.OpId    := IdPago;
-   NewPayment.Import  := Importe;
-   NewPayment.BIC     := BICBeneficiario;
-   NewPayment.Name    := NombreBeneficiario;
-   NewPayment.IBAN    := IBANBeneficiario;
-   NewPayment.Concept := Concepto;
-
-   FOrdenantes[Found].Operations.Add(NewPayment);
-end;
-
-procedure TDJMNorma3414XML.AddOrdenante(PaymentId       :string;
-                                        NombreOrdenante :string;
-                                        IBANOrdenante   :string;
-                                        BICOrdenante    :string);
-
-var Found        :Boolean;
-    i            :Integer;
-    NewOrdenante :TsepaOrdenante;
-begin
-  //si ya hay uno con esa cuenta, no lo añadimos
-  Found := False;
-  for i := 0 to FOrdenantes.Count -1 do begin
-     if FOrdenantes[i].IBAN = IBANOrdenante then Found := True;
-  end;
-
-  if not Found then begin
-     NewOrdenante := TsepaOrdenante.Create;
-     NewOrdenante.PaymentId := PaymentId;
-     NewOrdenante.Name      := NombreOrdenante;
-     NewOrdenante.IBAN      := IBANOrdenante;
-     NewOrdenante.BIC       := BICOrdenante;
-     FOrdenantes.Add(NewOrdenante);
-  end;
+  FInitiators.Add(AInitiator);
 end;
 
 function TDJMNorma3414XML.GetNumOperations:Integer;
-var i :TsepaOrdenante;
+var i :TsepaInitiator;
 begin
    Result := 0;
-   for i in FOrdenantes do begin
+   for i in FInitiators do begin
       Result := Result + i.Operations.Count;
    end;
 end;
 
 function TDJMNorma3414XML.GetTotalImport:Double;
-var i :TsepaOrdenante;
+var i :TsepaInitiator;
 begin
    Result := 0;
-   for i in FOrdenantes do begin
+   for i in FInitiators do begin
       Result := Result + i.GetTotalImport;
    end;
 end;
