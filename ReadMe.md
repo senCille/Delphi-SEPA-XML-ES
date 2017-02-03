@@ -40,8 +40,10 @@ por ejemplo [https://empresa.lacaixa.es/deployedfiles/empresas/Estaticos/pdf/Tra
 Actualización (Febrero 2016): Testeado en 3 bancos españoles. Tanto la norma 19.14 como la 34.14 y los ficheros han sido aceptados.
 Actualización (Febrero 2016): Testeado en 3 bancos españoles. Tanto la norma 19.14 como la 34.14 y los ficheros han sido aceptados.
 
-Espero que sea de utilidad.
+Espero que os sea de utilidad.
 Juan C.Cilleruelo Gonzalo
 
 
-senCille.es   **MANUFACTURING SOFTWARE**.
+senCille.es
+
+**MANUFACTURING SOFTWARE**.
